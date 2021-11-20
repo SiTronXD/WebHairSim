@@ -2,20 +2,15 @@
 import { vec3, mat4 } from 'gl-matrix';
 
 export const CreateAnimation = (draw:any, 
-    rotation:vec3 = vec3.fromValues(0,0,0), isAnimation = true) =>
+    rotation:vec3 = vec3.fromValues(0,0,0)) =>
 {
     function step()
     {
-        if(isAnimation)
-        {
-            rotation[0] += 0.01;
-            rotation[1] += 0.01;
-            rotation[2] += 0.01;
-        }
-        else
-        {
-            rotation = [0, 0, 0];
-        }
+        // Update rotation
+        rotation[0] += 0.01;
+        rotation[1] += 0.01;
+        rotation[2] += 0.01;
+
         draw();
         requestAnimationFrame(step);
     }

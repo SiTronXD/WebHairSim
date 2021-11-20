@@ -8,9 +8,9 @@ export const SpherePosition = (radius:number, theta:number,
     const snp = Math.sin(phi * Math.PI / 180);
     const cnp = Math.cos(phi * Math.PI / 180);
 
-    return vec3.fromValues(
+    return [
         radius * snt * cnp + center[0],
         radius * cnt + center[1],
         -radius*snt*snp + center[2]
-    );
+    ];
 }

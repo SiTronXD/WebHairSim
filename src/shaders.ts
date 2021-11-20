@@ -45,7 +45,7 @@ export const Shaders = (li: LightInputs) =>
             let mPosition : vec4<f32> = uniforms.modelMatrix * position;
 
             output.vPosition = mPosition;
-            output.vNormal = uniforms.normalMatrix * normal;
+            output.vNormal = uniforms.modelMatrix * normal;
             output.Position = uniforms.viewProjectionMatrix * mPosition;
 
             return output;
@@ -65,23 +65,11 @@ export const Shaders = (li: LightInputs) =>
         {
             let N : vec3<f32> = normalize(vNormal.xyz);
             let L : vec3<f32> = normalize(uniforms.lightPosition.xyz - vPosition.xyz);
-            let V : vec3<f32> = normalize(uniforms.eyePosition.xyz - vPosition.xyz);
-            let H : vec3<f32> = normalize(L + V);
 
             let diffuse : f32 = ${li.diffuseIntensity} * max(dot(N, L), 0.0);
-            var specular : f32;
-            var isp : i32 = ${li.isPhong};
-            if(isp == 1)
-            {
-                specular = ${li.specularIntensity} * pow(max(dot(V, reflect(-L, N)), 0.0), ${li.shininess});
-            }
-            else
-            {
-                specular = ${li.specularIntensity} * pow(max(dot(N, H), 0.0), ${li.shininess});
-            }
 
             let ambient : f32 = ${li.ambientIntensity};
-            let finalColor : vec3<f32> = vec3<f32>${li.color} * (ambient + diffuse) + vec3<f32>${li.specularColor} * specular;
+            let finalColor : vec3<f32> = vec3<f32>${li.color} * (ambient + diffuse);
 
             return vec4<f32>(finalColor, 1.0);
         }
