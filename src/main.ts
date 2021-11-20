@@ -1,9 +1,9 @@
-import { CreateShapeWithLight } from './light';
+import { CreateShapeWithLight, hairSim } from './hairSimScene';
 import { LightInputs } from './shaders';
-import { CubeData } from './vertex_data';
+import { CubeData1 } from './vertex_data';
 import $ from 'jquery';
 
-const data = CubeData();
+const data = CubeData1();
 let li:LightInputs = {};
 let isAnimation = true;
-CreateShapeWithLight(data.positions, data.normals, li, isAnimation);
+hairSim(data.vertexData, data.indexData, li, isAnimation);
