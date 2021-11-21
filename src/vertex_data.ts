@@ -1,7 +1,7 @@
 import { SpherePosition } from './math-func';
 import { vec3 } from 'gl-matrix';
 
-export const SphereData = (radius:number, u:number, v:number, 
+export const sphereData = (radius:number, u:number, v:number, 
     center:vec3 = [0,0,0]) =>
 {
     if(u < 2 || v < 2) return;
@@ -57,7 +57,7 @@ export const SphereData = (radius:number, u:number, v:number,
     };
 }
 
-export const CubeData = () => 
+export const cubeData = () => 
 {
     //   <side>   <normal>
     const vertexData = new Float32Array(

@@ -1,5 +1,4 @@
-import { HairSim } from './hairSimScene';
-import { LightInputs } from './shaders';
+import { hairSim } from './hairSimScene';
 import $ from 'jquery';
 
-HairSim();
+hairSim();

@@ -1,26 +1,26 @@
 import * as WGPU from './helper';
-import { Shaders } from './shaders';
+import { defaultShaders } from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
-import { SphereData } from './vertex_data';
+import { sphereData } from './vertex_data';
 
-export const HairSim = async () =>
+export const hairSim = async () =>
 {
-    const gpu = await WGPU.InitGPU();
+    const gpu = await WGPU.initGPU();
     const device = gpu.device;
     
     // Model data
-    const data = SphereData(1.0, 10, 15);
+    const data = sphereData(1.0, 10, 15);
     const vertexData = data?.vertexData!;
     const indexData = data?.indexData!;
 
     // Create buffers
     const numIndices = indexData.length;
-    const vertexBuffer = WGPU.CreateGPUBuffer(device, vertexData);
-    const indexBuffer = WGPU.CreateGPUBufferUint(device, indexData);
+    const vertexBuffer = WGPU.createGPUBuffer(device, vertexData);
+    const indexBuffer = WGPU.createGPUBufferUint(device, indexData);
  
     // Shader and render pipeline
-    const shader = Shaders();
-    const pipeline = WGPU.CreateRenderPipeline(
+    const shader = defaultShaders();
+    const pipeline = WGPU.createRenderPipeline(
         device, 
         shader, 
         gpu.format
@@ -31,7 +31,7 @@ export const HairSim = async () =>
     const modelMatrix = mat4.create();
     let vMatrix = mat4.create();
     let vpMatrix = mat4.create();
-    const vp = WGPU.CreateViewProjection(gpu.canvas.width/gpu.canvas.height);
+    const vp = WGPU.createViewProjection(gpu.canvas.width/gpu.canvas.height);
     vpMatrix = vp.viewProjectionMatrix;
 
     // Add rotation and camera
@@ -56,7 +56,7 @@ export const HairSim = async () =>
     device.queue.writeBuffer(fragmentUniformBuffer, 16, eyePosition);
 
     // Uniform bind group for uniforms
-    const uniformBindGroup = WGPU.CreateBindGroup(
+    const uniformBindGroup = WGPU.createBindGroup(
         device, 
         pipeline, 
         vertexUniformBuffer, 
@@ -72,15 +72,15 @@ export const HairSim = async () =>
     });
 
     // Color and depth/stencil attachments
-    const renderPassDescription = WGPU.CreateRenderPassDesc(
+    const renderPassDescription = WGPU.createRenderPassDesc(
         textureView, 
         depthTexture.createView()
     );
     
-    function Draw() 
+    function draw() 
     {
         // Update model matrix and normal matrix
-        WGPU.CreateTransforms(modelMatrix, [0,0,0], rotation);
+        WGPU.createTransforms(modelMatrix, [0,0,0], rotation);
         mat4.invert(normalMatrix, modelMatrix);
         mat4.transpose(normalMatrix, normalMatrix);
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);
@@ -105,5 +105,5 @@ export const HairSim = async () =>
     }
 
     // Make draw() loop
-    WGPU.CreateAnimation(Draw, rotation);
+    WGPU.createAnimation(draw, rotation);
 }

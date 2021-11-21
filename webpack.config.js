@@ -20,11 +20,17 @@ module.exports = {
                 test: /\.js$/,
                 exclude: ['/node_modules/']
             },            
-            { test: /\.tsx?$/, loader: "ts-loader" },        
+            { 
+                test: /\.tsx?$/, loader: "ts-loader" 
+            },        
             {
                 test: /\.css$/,
                 sideEffects: true,
                 loader: "css-loader"
+            },
+            {
+                test: /\.wgsl/,
+                type: 'asset/source'
             }
         ]
     }

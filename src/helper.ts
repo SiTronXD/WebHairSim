@@ -1,6 +1,6 @@
 import { vec3, mat4 } from 'gl-matrix';
 
-export const CreateAnimation = (draw: any, 
+export const createAnimation = (draw: any, 
     rotation: vec3 = vec3.fromValues(0,0,0)) =>
 {
     function step()
@@ -16,7 +16,7 @@ export const CreateAnimation = (draw: any,
     requestAnimationFrame(step);
 }
 
-export const CreateTransforms = (modelMat: mat4, translation: vec3 = [0, 0, 0],
+export const createTransforms = (modelMat: mat4, translation: vec3 = [0, 0, 0],
     rotation: vec3 = [0, 0, 0], scaling: vec3 = [1, 1, 1]) =>
 {
     const rotateXMat = mat4.create();
@@ -40,7 +40,7 @@ export const CreateTransforms = (modelMat: mat4, translation: vec3 = [0, 0, 0],
     mat4.multiply(modelMat, translateMat, modelMat);
 }
 
-export const CreateViewProjection = (aspectRatio = 1.0, 
+export const createViewProjection = (aspectRatio = 1.0, 
     cameraPosition: vec3 = [2, 2, 4], lookDirection: vec3 = [0, 0, 0],
     upDirection: vec3 = [0, 1, 0]) =>
 {
@@ -60,7 +60,7 @@ export const CreateViewProjection = (aspectRatio = 1.0,
     };
 }
 
-export const CreateRenderPassDesc = (
+export const createRenderPassDesc = (
     textureView: GPUTextureView, depthTextureView: GPUTextureView) =>
 {
     const renderPassDescription = {
@@ -81,7 +81,7 @@ export const CreateRenderPassDesc = (
     return renderPassDescription;
 }
 
-export const CreateBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
+export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
 {
     const uniformBindGroup = device.createBindGroup({
@@ -109,7 +109,7 @@ export const CreateBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     return uniformBindGroup;
 }
 
-export const CreateRenderPipeline = (device: GPUDevice, shader: any, 
+export const createRenderPipeline = (device: GPUDevice, shader: any, 
     gpuFormat: GPUTextureFormat) =>
 {
     // Vertex buffer is a single buffer
@@ -162,7 +162,7 @@ export const CreateRenderPipeline = (device: GPUDevice, shader: any,
     return pipeline;
 }
 
-export const CreateGPUBufferUint = (device: GPUDevice, data: Uint32Array,
+export const createGPUBufferUint = (device: GPUDevice, data: Uint32Array,
     usageFlag: GPUBufferUsageFlags = GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) =>
 {
     // Created mapped buffer
@@ -181,7 +181,7 @@ export const CreateGPUBufferUint = (device: GPUDevice, data: Uint32Array,
     return buffer;
 }
 
-export const CreateGPUBuffer = (device: GPUDevice, data: Float32Array,
+export const createGPUBuffer = (device: GPUDevice, data: Float32Array,
     usageFlag: GPUBufferUsageFlags = GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST) => 
 {
     // Create mapped buffer
@@ -200,8 +200,8 @@ export const CreateGPUBuffer = (device: GPUDevice, data: Float32Array,
     return buffer;
 }
 
-export const InitGPU = async () => {
-    const checkgpu = CheckWebGPU();
+export const initGPU = async () => {
+    const checkgpu = checkWebGPU();
     if(checkgpu.includes('Your current browser does not support WebGPU!'))
     {
         console.log(checkgpu);
@@ -234,7 +234,7 @@ export const InitGPU = async () => {
     };
 }
 
-export const CheckWebGPU = () => {
+export const checkWebGPU = () => {
     let result = 'Great, your current browser supports WebGPU!';
 
     // WebGPU is not supported

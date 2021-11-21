@@ -16,6 +16,11 @@
     "strict": true,
     "sourceMap": true
   },
+  "include": [
+    "definitions.d.ts",
+    "src/**/*",
+    "node_modules/@webgpu/types/**/*"
+  ],
   "exclude": [
     "node_modules"
   ]
