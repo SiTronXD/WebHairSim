@@ -1,8 +1,7 @@
-
 import { vec3, mat4 } from 'gl-matrix';
 
-export const CreateAnimation = (draw:any, 
-    rotation:vec3 = vec3.fromValues(0,0,0)) =>
+export const CreateAnimation = (draw: any, 
+    rotation: vec3 = vec3.fromValues(0,0,0)) =>
 {
     function step()
     {
@@ -17,8 +16,8 @@ export const CreateAnimation = (draw:any,
     requestAnimationFrame(step);
 }
 
-export const CreateTransforms = (modelMat:mat4, translation:vec3 = [0, 0, 0],
-    rotation:vec3 = [0, 0, 0], scaling:vec3 = [1, 1, 1]) =>
+export const CreateTransforms = (modelMat: mat4, translation: vec3 = [0, 0, 0],
+    rotation: vec3 = [0, 0, 0], scaling: vec3 = [1, 1, 1]) =>
 {
     const rotateXMat = mat4.create();
     const rotateYMat = mat4.create();
@@ -42,8 +41,8 @@ export const CreateTransforms = (modelMat:mat4, translation:vec3 = [0, 0, 0],
 }
 
 export const CreateViewProjection = (aspectRatio = 1.0, 
-    cameraPosition:vec3 = [2, 2, 4], lookDirection:vec3 = [0, 0, 0],
-    upDirection:vec3 = [0, 1, 0]) =>
+    cameraPosition: vec3 = [2, 2, 4], lookDirection: vec3 = [0, 0, 0],
+    upDirection: vec3 = [0, 1, 0]) =>
 {
     const viewMatrix = mat4.create();
     const projectionMatrix = mat4.create();
@@ -53,45 +52,149 @@ export const CreateViewProjection = (aspectRatio = 1.0,
     mat4.lookAt(viewMatrix, cameraPosition, lookDirection, upDirection);
     mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
 
-    const cameraOption = 
-    {
-        eye: cameraPosition,
-        center: lookDirection,
-        zoomMax: 100,
-        zoomSpeed: 2
-    }
-
     return { 
         viewMatrix, 
         projectionMatrix, 
         viewProjectionMatrix, 
-        cameraOption 
+        cameraPosition
     };
 }
 
-export const CreateGPUBufferUint = (device:GPUDevice, data:Uint32Array,
-    usageFlag:GPUBufferUsageFlags = GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) =>
+export const CreateRenderPassDesc = (
+    textureView: GPUTextureView, depthTextureView: GPUTextureView) =>
 {
+    const renderPassDescription = {
+        colorAttachments: [{
+            view: textureView,
+            loadValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 }, //background color
+            storeOp: 'store'
+        }],
+        depthStencilAttachment: {
+            view: depthTextureView,
+            depthLoadValue: 1.0,
+            depthStoreOp: "store",
+            stencilLoadValue: 0,
+            stencilStoreOp: "store"
+        }
+    };
+
+    return renderPassDescription;
+}
+
+export const CreateBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
+    vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
+{
+    const uniformBindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: {
+                    buffer: vertexUniformBuffer,
+                    offset: 0,
+                    size: 64*3
+                }
+            },
+            {
+                binding: 1,
+                resource: {
+                    buffer: fragmentUniformBuffer,
+                    offset: 0,
+                    size: 16*2
+                }
+            }                
+        ]
+    });
+
+    return uniformBindGroup;
+}
+
+export const CreateRenderPipeline = (device: GPUDevice, shader: any, 
+    gpuFormat: GPUTextureFormat) =>
+{
+    // Vertex buffer is a single buffer
+    const pipeline = device.createRenderPipeline({
+        vertex: {
+            module: device.createShaderModule({                    
+                code: shader.vertexShader
+            }),
+            entryPoint: "main",
+            buffers:[
+                {
+                    arrayStride: 4*(3+3),
+                    attributes: [
+                        {
+                            shaderLocation: 0,
+                            format: "float32x3",
+                            offset: 0
+                        },
+                        {
+                            shaderLocation: 1,
+                            format: "float32x3",
+                            offset: 4*3
+                        }
+                    ]
+                }
+            ]
+        },
+        fragment: {
+            module: device.createShaderModule({                    
+                code: shader.fragmentShader
+            }),
+            entryPoint: "main",
+            targets: [
+                {
+                    format: gpuFormat
+                }
+            ]
+        },
+        primitive: {
+            topology: "triangle-list",
+            cullMode: "back"
+        },
+        depthStencil: {
+            format: "depth24plus",
+            depthWriteEnabled: true,
+            depthCompare: "less"
+        }
+    });
+
+    return pipeline;
+}
+
+export const CreateGPUBufferUint = (device: GPUDevice, data: Uint32Array,
+    usageFlag: GPUBufferUsageFlags = GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) =>
+{
+    // Created mapped buffer
     const buffer = device.createBuffer({
         size: data.byteLength,
         usage: usageFlag,
         mappedAtCreation: true
     });
+
+    // Set buffer data 
     new Uint32Array(buffer.getMappedRange()).set(data);
+
+    // Unmap
     buffer.unmap();
 
     return buffer;
 }
 
-export const CreateGPUBuffer = (device:GPUDevice, data:Float32Array,
-    usageFlag:GPUBufferUsageFlags = GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST) => 
+export const CreateGPUBuffer = (device: GPUDevice, data: Float32Array,
+    usageFlag: GPUBufferUsageFlags = GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST) => 
 {
+    // Create mapped buffer
     const buffer = device.createBuffer({
         size: data.byteLength,
         usage: usageFlag,
         mappedAtCreation: true
     });
+
+    // Set buffer data
     new Float32Array(buffer.getMappedRange()).set(data);
+
+    // Unmap
     buffer.unmap();
 
     return buffer;
@@ -123,11 +226,18 @@ export const InitGPU = async () => {
         size: size
     });
 
-    return { device, canvas, format, context };
+    return { 
+        device, 
+        canvas, 
+        format, 
+        context 
+    };
 }
 
 export const CheckWebGPU = () => {
     let result = 'Great, your current browser supports WebGPU!';
+
+    // WebGPU is not supported
     if(!navigator.gpu) {
         result = `Your current browser does not support WebGPU! 
         Make sure you are on a system with WebGPU enabled. Currently,

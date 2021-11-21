@@ -1,28 +1,22 @@
+
+
 export interface LightInputs 
 {
     color?: string;
     ambientIntensity?: string;
     diffuseIntensity?: string;
-    specularIntensity?: string;
-    shininess?: string;
-    specularColor?: string;
-    isPhong?: string;
 }
 
-export const Shaders = (li: LightInputs) => 
+export const Shaders = () => 
 {
+    let li:LightInputs = {};
+
     // Define default input values:
-    li.color = li.color == undefined ? '(1.0, 0.0, 0.0)' : li.color;
-    li.ambientIntensity = li.ambientIntensity == undefined ? '0.2' : li.ambientIntensity;
-    li.diffuseIntensity = li.diffuseIntensity == undefined ? '0.8' : li.diffuseIntensity;
-    li.specularIntensity = li.specularIntensity == undefined ? '0.4' : li.specularIntensity;
-    li.shininess = li.shininess == undefined ? '30.0' : li.shininess;
-    li.specularColor = li.specularColor == undefined ? '(1.0, 1.0, 1.0)' : li.specularColor;
-    li.isPhong = li.isPhong == undefined ? '0' : li.isPhong;
+    li.color = '(1.0, 0.0, 0.0)';
+    li.ambientIntensity = '0.2';
+    li.diffuseIntensity = '0.8';
 
-    console.log(JSON.stringify(li, null, 4));
-
-    const vertex = `
+    const vertexShader = `
         [[block]] struct Uniforms
         {
             viewProjectionMatrix : mat4x4<f32>;
@@ -52,7 +46,7 @@ export const Shaders = (li: LightInputs) =>
         }
     `;
 
-    const fragment = `
+    const fragmentShader = `
         [[block]] struct Uniforms
         {
             lightPosition : vec4<f32>;
@@ -75,5 +69,8 @@ export const Shaders = (li: LightInputs) =>
         }
     `;
 
-    return { vertex, fragment };
+    return { 
+        vertexShader,
+        fragmentShader 
+    };
 }
