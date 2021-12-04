@@ -6,6 +6,10 @@ struct Point
 {
     points : [[stride(16)]] array<Point>;
 };
+[[block]] struct HairParams
+{
+    deltaTime: f32;
+};
 [[binding(0), group(0)]] var<storage, read> hairPoints : HairPoints;
 [[binding(1), group(0)]] var<storage, read_write> hairPointsTempWrite : HairPoints;
 
@@ -14,12 +18,13 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
 {
     var index : u32 = GlobalInvocationID.x;
 
-    // Write to temp buffer to avoid race conditions
-    var readPos = hairPoints.points[index].pos;
-    hairPointsTempWrite.points[index].pos = vec4<f32>(0.0, readPos.y - 0.01, f32(index), 0.0);
-
-    if(index != 2u)
+    // Don't move the first point
+    if(index != 0u)
     {
-        hairPointsTempWrite.points[index].pos.y = 0.0;
+        var readPos = hairPoints.points[index].pos;
+
+        // Write to temp buffer to avoid race conditions
+        hairPointsTempWrite.points[index].pos = 
+            readPos + vec4<f32>(0.0, -0.001, 0.0, 0.0);
     }
 }

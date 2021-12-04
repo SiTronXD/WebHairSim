@@ -31,11 +31,17 @@ export const hairSim = async () =>
     const initialHairPointData = new Float32Array(numHairPoints * 4);
     const initialHairPointVertexData = new Float32Array(numHairPoints * 4 * 2);
 
-    for(let i = 0; i < numHairPoints * 4; i++)
+    for(let i = 0; i < numHairPoints; i++)
     {
-        initialHairPointData[i] = 0.0;
-        initialHairPointVertexData[i * 2 + 0] = 0.0;
-        initialHairPointVertexData[i * 2 + 1] = 0.0;
+        initialHairPointData[i * 4 + 0] = 0.0;
+        initialHairPointData[i * 4 + 1] = 0.0;
+        initialHairPointData[i * 4 + 2] = i;
+        initialHairPointData[i * 4 + 3] = 0.0;
+    }
+    // Just init the point vertex positions to 0
+    for(let i = 0; i < numHairPoints * 4 * 2; i++)
+    {
+        initialHairPointVertexData[i] = 0.0;
     }
     const hairPointBuffer = WGPU.createGPUBuffer(
         device, 
