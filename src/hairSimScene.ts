@@ -15,6 +15,7 @@ export const hairSim = async () =>
  
     // Hair strand data buffers
     const numHairPoints: number = 4;
+    const maxHairLength: number = 4.0;
     const hairStrandData = createHairStrandData(numHairPoints);
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandVertexBuffer = WGPU.createGPUBuffer(device, hairStrandData?.vertexData);
@@ -72,6 +73,7 @@ export const hairSim = async () =>
     const HairParams = 
     {
         deltaTime: -0.01,
+        maxHairPointDist: maxHairLength / numHairPoints,
     };
 
     // Add rotation and camera
@@ -90,7 +92,7 @@ export const hairSim = async () =>
         size: 32,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    const computeUniformBufferSize: number = 4 * (1);
+    const computeUniformBufferSize: number = 4 * 2;
     const computeUniformBuffer = device.createBuffer(
     {
         size: computeUniformBufferSize,
@@ -104,7 +106,10 @@ export const hairSim = async () =>
     device.queue.writeBuffer(
         computeUniformBuffer, 
         0, 
-        new Float32Array([HairParams.deltaTime])
+        new Float32Array([
+            HairParams.deltaTime, 
+            HairParams.maxHairPointDist
+        ])
     );
 
     // Uniform bind groups for uniforms in render pipeline and buffer
