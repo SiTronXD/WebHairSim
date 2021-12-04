@@ -23,15 +23,10 @@ export const hairSim = async () =>
 
 
     // Render pipelines and compute pipeline
-    const modelPipeline = WGPU.createModelRenderPipeline(
-        device, 
-        gpu.format
-    );
-    const hairPipeline = WGPU.createHairRenderPipeline(
-        device,
-        gpu.format
-    );
-    const computePipeline = WGPU.createComputePipeline(device);
+    const modelPipeline = WGPU.createModelRenderPipeline(device, gpu.format);
+    const hairPipeline = WGPU.createHairRenderPipeline(device, gpu.format);
+    const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
+    const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
 
     // Hair points
     const initialHairPointData = new Float32Array(hairStrandNumVertices);
@@ -40,6 +35,11 @@ export const hairSim = async () =>
         initialHairPointData[i] = 0.0;
     }
     const hairPointBuffer = WGPU.createGPUBuffer(
+        device, 
+        initialHairPointData, 
+        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
+    );
+    const hairPointTempWriteBuffer = WGPU.createGPUBuffer(
         device, 
         initialHairPointData, 
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
@@ -87,10 +87,18 @@ export const hairSim = async () =>
         vertexUniformBuffer, 
         fragmentUniformBuffer
     );
-    const computeBindGroup = WGPU.createComputeBindGroup(
+    const computeUpdateHairBindGroup = WGPU.createComputeBindGroup(
         device,
-        computePipeline,
+        computeUpdateHairPipeline,
         hairPointBuffer,
+        hairPointTempWriteBuffer,
+        initialHairPointData.byteLength
+    );
+    const computeApplyHairBindGroup = WGPU.createComputeBindGroup(
+        device,
+        computeApplyHairPipeline,
+        hairPointBuffer,
+        hairPointTempWriteBuffer,
         initialHairPointData.byteLength
     );
 
@@ -127,9 +135,17 @@ export const hairSim = async () =>
         // Compute pass
         {
             const passEncoder = commandEncoder.beginComputePass();
-            passEncoder.setPipeline(computePipeline);
-            passEncoder.setBindGroup(0, computeBindGroup);
+
+            // Hair physics
+            passEncoder.setPipeline(computeUpdateHairPipeline);
+            passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
             passEncoder.dispatch(hairStrandNumVertices);
+
+            // Apply changes
+            passEncoder.setPipeline(computeApplyHairPipeline);
+            passEncoder.setBindGroup(0, computeApplyHairBindGroup);
+            passEncoder.dispatch(hairStrandNumVertices);
+
             passEncoder.endPass();
         }
         

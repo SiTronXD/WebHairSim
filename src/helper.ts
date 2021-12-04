@@ -1,4 +1,4 @@
-import * as Shader from './shaders';
+import * as Shaders from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
 
 export const createAnimation = (draw: any, 
@@ -86,59 +86,10 @@ export const createRenderPassDesc = (
     return renderPassDescription;
 }
 
-export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
-    vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
-{
-    const uniformBindGroup = device.createBindGroup(
-    {
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: vertexUniformBuffer,
-                    offset: 0,
-                    size: 64*3
-                }
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: fragmentUniformBuffer,
-                    offset: 0,
-                    size: 16*2
-                }
-            }                
-        ]
-    });
-
-    return uniformBindGroup;
-}
-
-export const createComputeBindGroup = (device: GPUDevice, 
-    computePipeline: GPUComputePipeline, buffer: GPUBuffer, byteLength: number) =>
-{
-    const createdBindGroup = device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
-        entries: [
-        {
-            binding: 0,
-            resource: 
-            {
-                buffer: buffer,
-                offset: 0,
-                size: byteLength,
-            },
-        }],
-    });
-
-    return createdBindGroup;
-}
-
 export const createModelRenderPipeline = (device: GPUDevice,
     gpuFormat: GPUTextureFormat) =>
 {
-    const shader = Shader.getModelShaders();
+    const shader = Shaders.getModelShaders();
 
     // Vertex buffer is a single buffer
     const pipeline = device.createRenderPipeline(
@@ -197,7 +148,7 @@ export const createModelRenderPipeline = (device: GPUDevice,
 export const createHairRenderPipeline = (device: GPUDevice,
     gpuFormat: GPUTextureFormat) =>
 {
-    const shader = Shader.getHairShaders();
+    const shader = Shaders.getHairShaders();
 
     const pipeline = device.createRenderPipeline(
     {
@@ -263,23 +214,92 @@ export const createHairRenderPipeline = (device: GPUDevice,
     return pipeline;
 }
 
-export const createComputePipeline = (device: GPUDevice) =>
+export const createComputePipeline = (device: GPUDevice, shader: any) =>
 {
-    const computeShader = Shader.getHairComputeShader();
-
     const computePipeline = device.createComputePipeline(
     {
         compute: 
         {
             module: device.createShaderModule(
             {
-                code: computeShader
+                code: shader
             }),
             entryPoint: 'main'
         }
     });
 
     return computePipeline;
+}
+
+export const createComputeUpdateHairPipeline = (device: GPUDevice) =>
+{
+    return createComputePipeline(device, Shaders.getUpdateHairComputeShader());
+}
+
+export const createComputeApplyHairPipeline = (device: GPUDevice) =>
+{
+    return createComputePipeline(device, Shaders.getApplyHairComputeShader());
+}
+
+export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
+    vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
+{
+    const uniformBindGroup = device.createBindGroup(
+    {
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+        {
+            binding: 0,
+            resource: 
+            {
+                buffer: vertexUniformBuffer,
+                offset: 0,
+                size: 64*3
+            }
+        },
+        {
+            binding: 1,
+            resource: 
+            {
+                buffer: fragmentUniformBuffer,
+                offset: 0,
+                size: 16*2
+            }
+        }]
+    });
+
+    return uniformBindGroup;
+}
+
+export const createComputeBindGroup = (device: GPUDevice, 
+    computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer, 
+    hairPointTempWriteBuffer: GPUBuffer, byteLength: number) =>
+{
+    const createdBindGroup = device.createBindGroup(
+    {
+        layout: computePipeline.getBindGroupLayout(0),
+        entries: [
+        {
+            binding: 0,
+            resource: 
+            {
+                buffer: hairPointBuffer,
+                size: byteLength,
+                offset: 0,
+            },
+        },
+        {
+            binding: 1,
+            resource: 
+            {
+                buffer: hairPointTempWriteBuffer,
+                size: byteLength,
+                offset: 0,
+            },
+        }],
+    });
+
+    return createdBindGroup;
 }
 
 export const createGPUBufferUint = (device: GPUDevice, data: Uint32Array,
