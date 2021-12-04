@@ -1,5 +1,4 @@
 import * as WGPU from './helper';
-import * as Shader from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertex_data';
 
@@ -14,7 +13,7 @@ export const hairSim = async () =>
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
-    // Hair strand buffers
+    // Hair strand data buffers
     const numHairPoints = 4;
     const hairStrandData = createHairStrandData(numHairPoints);
     const hairStrandNumVertices = hairStrandData?.vertexData.length!;
@@ -23,83 +22,18 @@ export const hairSim = async () =>
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
 
 
-    // Shaders and render pipeline
-    const modelPipeline = WGPU.createRenderPipeline(
+    // Render pipelines and compute pipeline
+    const modelPipeline = WGPU.createModelRenderPipeline(
         device, 
-        Shader.getModelShaders(), 
         gpu.format
     );
+    const hairPipeline = WGPU.createHairRenderPipeline(
+        device,
+        gpu.format
+    );
+    const computePipeline = WGPU.createComputePipeline(device);
 
-    const hairShader = Shader.getHairShaders();
-    const hairPipeline = device.createRenderPipeline({
-        vertex: {
-            module: device.createShaderModule({                    
-                code: hairShader.vertexShader
-            }),
-            entryPoint: "main",
-            buffers:[
-                // Hair points, vec4 for read coherency
-                {
-                    arrayStride: 4*(4),
-                    attributes: [
-                        {
-                            shaderLocation: 0,
-                            format: "float32x4",
-                            offset: 0
-                        }
-                    ]
-                },
-                // Positions and normals
-                {
-                    arrayStride: 4*(3+3),
-                    attributes: [
-                        {
-                            shaderLocation: 1,
-                            format: "float32x3",
-                            offset: 0
-                        },
-                        {
-                            shaderLocation: 2,
-                            format: "float32x3",
-                            offset: 4*3
-                        }
-                    ]
-                }
-            ]
-        },
-        fragment: {
-            module: device.createShaderModule({                    
-                code: hairShader.fragmentShader
-            }),
-            entryPoint: "main",
-            targets: [
-                {
-                    format: gpu.format
-                }
-            ]
-        },
-        primitive: {
-            topology: "triangle-list",
-            cullMode: "back"
-        },
-        depthStencil: {
-            format: "depth24plus",
-            depthWriteEnabled: true,
-            depthCompare: "less"
-        }
-    });
-    const computePipeline = device.createComputePipeline(
-    {
-        compute: 
-        {
-            module: device.createShaderModule(
-            {
-                code: Shader.getHairComputeShader()
-            }),
-            entryPoint: 'main'
-        }
-    });
-
+    // Hair points
     const initialHairPointData = new Float32Array(hairStrandNumVertices);
     for(let i = 0; i < hairStrandNumVertices; i++)
     {
@@ -110,20 +44,6 @@ export const hairSim = async () =>
         initialHairPointData, 
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
-
-    const computeBindGroup = device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
-        entries: [
-          {
-            binding: 0,
-            resource: {
-              buffer: hairPointBuffer,
-              offset: 0,
-              size: initialHairPointData.byteLength,
-            },
-          }
-        ],
-      });
 
     // Create uniform data
     const normalMatrix = mat4.create();
@@ -153,34 +73,26 @@ export const hairSim = async () =>
     device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
     device.queue.writeBuffer(fragmentUniformBuffer, 16, eyePosition);
 
-    // Uniform bind groups for uniforms
+    // Uniform bind groups for uniforms in render pipeline and buffer
+    // in compute pipeline
     const modelBindGroup = WGPU.createBindGroup(
         device, 
         modelPipeline, 
         vertexUniformBuffer, 
         fragmentUniformBuffer
     );
-    const hairBindGroup = device.createBindGroup({
-        layout: hairPipeline.getBindGroupLayout(0),
-        entries: [
-            {
-                binding: 0,
-                resource: {
-                    buffer: vertexUniformBuffer,
-                    offset: 0,
-                    size: 64*3
-                }
-            },
-            {
-                binding: 1,
-                resource: {
-                    buffer: fragmentUniformBuffer,
-                    offset: 0,
-                    size: 16*2
-                }
-            }
-        ]
-    });
+    const hairBindGroup = WGPU.createBindGroup(
+        device,
+        hairPipeline,
+        vertexUniformBuffer, 
+        fragmentUniformBuffer
+    );
+    const computeBindGroup = WGPU.createComputeBindGroup(
+        device,
+        computePipeline,
+        hairPointBuffer,
+        initialHairPointData.byteLength
+    );
 
     // Color and depth textures
     let textureView = gpu.context.getCurrentTexture().createView();

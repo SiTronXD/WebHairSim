@@ -1,3 +1,4 @@
+import * as Shader from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
 
 export const createAnimation = (draw: any, 
@@ -114,9 +115,31 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     return uniformBindGroup;
 }
 
-export const createRenderPipeline = (device: GPUDevice, shader: any, 
+export const createComputeBindGroup = (device: GPUDevice, 
+    computePipeline: GPUComputePipeline, buffer: GPUBuffer, byteLength: number) =>
+{
+    const createdBindGroup = device.createBindGroup({
+        layout: computePipeline.getBindGroupLayout(0),
+        entries: [
+        {
+            binding: 0,
+            resource: 
+            {
+                buffer: buffer,
+                offset: 0,
+                size: byteLength,
+            },
+        }],
+    });
+
+    return createdBindGroup;
+}
+
+export const createModelRenderPipeline = (device: GPUDevice,
     gpuFormat: GPUTextureFormat) =>
 {
+    const shader = Shader.getModelShaders();
+
     // Vertex buffer is a single buffer
     const pipeline = device.createRenderPipeline(
     {
@@ -169,6 +192,94 @@ export const createRenderPipeline = (device: GPUDevice, shader: any,
     });
 
     return pipeline;
+}
+
+export const createHairRenderPipeline = (device: GPUDevice,
+    gpuFormat: GPUTextureFormat) =>
+{
+    const shader = Shader.getHairShaders();
+
+    const pipeline = device.createRenderPipeline(
+    {
+        vertex: 
+        {
+            module: device.createShaderModule(
+            {
+                code: shader.vertexShader
+            }),
+            entryPoint: "main",
+            buffers: [
+                // Hair points, vec4 for read coherency
+                {
+                    arrayStride: 4*(4),
+                    attributes: [
+                    {
+                        shaderLocation: 0,
+                        format: "float32x4",
+                        offset: 0
+                    }]
+                },
+                // Positions and normals
+                {
+                    arrayStride: 4*(3+3),
+                    attributes: [
+                    {
+                        shaderLocation: 1,
+                        format: "float32x3",
+                        offset: 0
+                    },
+                    {
+                        shaderLocation: 2,
+                        format: "float32x3",
+                        offset: 4*3
+                    }]
+                }
+            ]
+        },
+        fragment: {
+            module: device.createShaderModule(
+            { 
+                code: shader.fragmentShader
+            }),
+            entryPoint: "main",
+            targets: [
+            {
+                format: gpuFormat
+            }]
+        },
+        primitive: 
+        {
+            topology: "triangle-list",
+            cullMode: "back"
+        },
+        depthStencil: 
+        {
+            format: "depth24plus",
+            depthWriteEnabled: true,
+            depthCompare: "less"
+        }
+    });
+
+    return pipeline;
+}
+
+export const createComputePipeline = (device: GPUDevice) =>
+{
+    const computeShader = Shader.getHairComputeShader();
+
+    const computePipeline = device.createComputePipeline(
+    {
+        compute: 
+        {
+            module: device.createShaderModule(
+            {
+                code: computeShader
+            }),
+            entryPoint: 'main'
+        }
+    });
+
+    return computePipeline;
 }
 
 export const createGPUBufferUint = (device: GPUDevice, data: Uint32Array,
