@@ -21,7 +21,7 @@ fn main(
     [[location(2)]] normal : vec4<f32>) -> Output
 {
     var output : Output;
-    let mPosition : vec4<f32> = uniforms.modelMatrix * vec4<f32>(position.xyz + pointPosition.xyz, 1.0);
+    let mPosition : vec4<f32> = uniforms.modelMatrix * vec4<f32>(pointPosition.xyz, 1.0);
 
     output.vPosition = mPosition;
     output.vNormal = uniforms.modelMatrix * vec4<f32>(normal.xyz, 0.0);

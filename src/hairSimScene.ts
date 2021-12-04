@@ -14,9 +14,8 @@ export const hairSim = async () =>
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
     // Hair strand data buffers
-    const numHairPoints = 4;
+    const numHairPoints: number = 4;
     const hairStrandData = createHairStrandData(numHairPoints);
-    const hairStrandNumVertices = hairStrandData?.vertexData.length!;
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandVertexBuffer = WGPU.createGPUBuffer(device, hairStrandData?.vertexData);
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
@@ -29,10 +28,14 @@ export const hairSim = async () =>
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
 
     // Hair points
-    const initialHairPointData = new Float32Array(hairStrandNumVertices);
-    for(let i = 0; i < hairStrandNumVertices; i++)
+    const initialHairPointData = new Float32Array(numHairPoints * 4);
+    const initialHairPointVertexData = new Float32Array(numHairPoints * 4 * 2);
+
+    for(let i = 0; i < numHairPoints * 4; i++)
     {
         initialHairPointData[i] = 0.0;
+        initialHairPointVertexData[i * 2 + 0] = 0.0;
+        initialHairPointVertexData[i * 2 + 1] = 0.0;
     }
     const hairPointBuffer = WGPU.createGPUBuffer(
         device, 
@@ -42,6 +45,11 @@ export const hairSim = async () =>
     const hairPointTempWriteBuffer = WGPU.createGPUBuffer(
         device, 
         initialHairPointData, 
+        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
+    );
+    const hairPointVertexDataBuffer = WGPU.createGPUBuffer(
+        device, 
+        initialHairPointVertexData, 
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
 
@@ -87,19 +95,21 @@ export const hairSim = async () =>
         vertexUniformBuffer, 
         fragmentUniformBuffer
     );
-    const computeUpdateHairBindGroup = WGPU.createComputeBindGroup(
+    const computeUpdateHairBindGroup = WGPU.createComputeUpdateHairBindGroup(
         device,
         computeUpdateHairPipeline,
         hairPointBuffer,
         hairPointTempWriteBuffer,
         initialHairPointData.byteLength
     );
-    const computeApplyHairBindGroup = WGPU.createComputeBindGroup(
+    const computeApplyHairBindGroup = WGPU.createComputeApplyHairBindGroup(
         device,
         computeApplyHairPipeline,
         hairPointBuffer,
         hairPointTempWriteBuffer,
-        initialHairPointData.byteLength
+        hairPointVertexDataBuffer,
+        initialHairPointData.byteLength,
+        initialHairPointVertexData.byteLength
     );
 
     // Color and depth textures
@@ -139,12 +149,12 @@ export const hairSim = async () =>
             // Hair physics
             passEncoder.setPipeline(computeUpdateHairPipeline);
             passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
-            passEncoder.dispatch(hairStrandNumVertices);
+            passEncoder.dispatch(numHairPoints);
 
             // Apply changes
             passEncoder.setPipeline(computeApplyHairPipeline);
             passEncoder.setBindGroup(0, computeApplyHairBindGroup);
-            passEncoder.dispatch(hairStrandNumVertices);
+            passEncoder.dispatch(numHairPoints);
 
             passEncoder.endPass();
         }
@@ -163,7 +173,7 @@ export const hairSim = async () =>
             // Hair
             passEncoder.setPipeline(hairPipeline);
             passEncoder.setBindGroup(0, hairBindGroup);    
-            passEncoder.setVertexBuffer(0, hairPointBuffer);
+            passEncoder.setVertexBuffer(0, hairPointVertexDataBuffer);
             passEncoder.setVertexBuffer(1, hairStrandVertexBuffer);
             passEncoder.setIndexBuffer(hairStrandIndexBuffer, "uint32");
             passEncoder.drawIndexed(hairStrandNumIndices);

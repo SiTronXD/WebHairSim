@@ -16,5 +16,10 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
 
     // Write to temp buffer to avoid race conditions
     var readPos = hairPoints.points[index].pos;
-    hairPointsTempWrite.points[index].pos = vec4<f32>(0.0, readPos.y - 0.01, 0.0, 0.0);
+    hairPointsTempWrite.points[index].pos = vec4<f32>(0.0, readPos.y - 0.01, f32(index), 0.0);
+
+    if(index != 2u)
+    {
+        hairPointsTempWrite.points[index].pos.y = 0.0;
+    }
 }
