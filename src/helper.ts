@@ -16,7 +16,8 @@ export const createAnimation = (draw: any,
     requestAnimationFrame(step);
 }
 
-export const createTransforms = (modelMat: mat4, translation: vec3 = [0, 0, 0],
+export const createTransforms = (
+    modelMat: mat4, translation: vec3 = [0, 0, 0],
     rotation: vec3 = [0, 0, 0], scaling: vec3 = [1, 1, 1]) =>
 {
     const rotateXMat = mat4.create();
@@ -63,13 +64,16 @@ export const createViewProjection = (aspectRatio = 1.0,
 export const createRenderPassDesc = (
     textureView: GPUTextureView, depthTextureView: GPUTextureView) =>
 {
-    const renderPassDescription = {
-        colorAttachments: [{
+    const renderPassDescription = 
+    {
+        colorAttachments: [
+        {
             view: textureView,
             loadValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 }, //background color
             storeOp: 'store'
         }],
-        depthStencilAttachment: {
+        depthStencilAttachment: 
+        {
             view: depthTextureView,
             depthLoadValue: 1.0,
             depthStoreOp: "store",
@@ -84,7 +88,8 @@ export const createRenderPassDesc = (
 export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
 {
-    const uniformBindGroup = device.createBindGroup({
+    const uniformBindGroup = device.createBindGroup(
+    {
         layout: pipeline.getBindGroupLayout(0),
         entries: [
             {
@@ -113,46 +118,50 @@ export const createRenderPipeline = (device: GPUDevice, shader: any,
     gpuFormat: GPUTextureFormat) =>
 {
     // Vertex buffer is a single buffer
-    const pipeline = device.createRenderPipeline({
-        vertex: {
-            module: device.createShaderModule({                    
+    const pipeline = device.createRenderPipeline(
+    {
+        vertex: 
+        {
+            module: device.createShaderModule(
+            {                    
                 code: shader.vertexShader
             }),
             entryPoint: "main",
             buffers:[
+            {
+                arrayStride: 4*(3+3),
+                attributes: [
                 {
-                    arrayStride: 4*(3+3),
-                    attributes: [
-                        {
-                            shaderLocation: 0,
-                            format: "float32x3",
-                            offset: 0
-                        },
-                        {
-                            shaderLocation: 1,
-                            format: "float32x3",
-                            offset: 4*3
-                        }
-                    ]
-                }
-            ]
+                    shaderLocation: 0,
+                    format: "float32x3",
+                    offset: 0
+                },
+                {
+                    shaderLocation: 1,
+                    format: "float32x3",
+                    offset: 4*3
+                }]
+            }]
         },
-        fragment: {
-            module: device.createShaderModule({                    
+        fragment: 
+        {
+            module: device.createShaderModule(
+            {
                 code: shader.fragmentShader
             }),
             entryPoint: "main",
             targets: [
-                {
-                    format: gpuFormat
-                }
-            ]
+            {
+                format: gpuFormat
+            }]
         },
-        primitive: {
+        primitive: 
+        {
             topology: "triangle-list",
             cullMode: "back"
         },
-        depthStencil: {
+        depthStencil: 
+        {
             format: "depth24plus",
             depthWriteEnabled: true,
             depthCompare: "less"
@@ -166,7 +175,8 @@ export const createGPUBufferUint = (device: GPUDevice, data: Uint32Array,
     usageFlag: GPUBufferUsageFlags = GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) =>
 {
     // Created mapped buffer
-    const buffer = device.createBuffer({
+    const buffer = device.createBuffer(
+    {
         size: data.byteLength,
         usage: usageFlag,
         mappedAtCreation: true
@@ -185,7 +195,8 @@ export const createGPUBuffer = (device: GPUDevice, data: Float32Array,
     usageFlag: GPUBufferUsageFlags = GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST) => 
 {
     // Create mapped buffer
-    const buffer = device.createBuffer({
+    const buffer = device.createBuffer(
+    {
         size: data.byteLength,
         usage: usageFlag,
         mappedAtCreation: true
@@ -220,7 +231,8 @@ export const initGPU = async () => {
     ];
     const format = context.getPreferredFormat(adapter!);
     
-    context.configure({
+    context.configure(
+    {
         device: device,
         format: format,
         size: size
@@ -238,7 +250,8 @@ export const checkWebGPU = () => {
     let result = 'Great, your current browser supports WebGPU!';
 
     // WebGPU is not supported
-    if(!navigator.gpu) {
+    if(!navigator.gpu) 
+    {
         result = `Your current browser does not support WebGPU! 
         Make sure you are on a system with WebGPU enabled. Currently,
         SPIR-WebGPU is only supported in <a href="https://www.google.com/chrome/canary">Chrome canary</a>

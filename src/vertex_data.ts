@@ -1,7 +1,7 @@
 import { SpherePosition } from './math-func';
 import { vec3 } from 'gl-matrix';
 
-export const sphereData = (radius:number, u:number, v:number, 
+export const createSphereData = (radius:number, u:number, v:number, 
     center:vec3 = [0,0,0]) =>
 {
     if(u < 2 || v < 2) return;
@@ -57,9 +57,9 @@ export const sphereData = (radius:number, u:number, v:number,
     };
 }
 
-export const cubeData = () => 
+export const createCubeData = () => 
 {
-    //   <side>   <normal>
+    //   <position>   <normal>
     const vertexData = new Float32Array(
     [
         // front     
@@ -125,3 +125,44 @@ export const cubeData = () =>
         indexData
     };
 };
+
+export const createHairStrandData = (numHairPoints : number) =>
+{
+    // Create vertices
+    let verts = [] as any;
+    for(let i = 0; i < numHairPoints; i++)
+    {
+        // Position 1
+        verts.push([1, 0, i]);
+
+        // Normal 1
+        verts.push([0, 1, 0]);
+
+
+        // Position 2
+        verts.push([-1, 0, i]);
+
+        // Normal 2
+        verts.push([0, 1, 0]);
+    }
+
+    // Create indices
+    let ind = [] as any;
+    for(let i = 0; i < numHairPoints - 1; i++)
+    {
+        // Create quad
+        ind.push([
+            i*2 + 0, i*2 + 1, i*2 + 2,
+            i*2 + 1, i*2 + 3, i*2 + 2
+        ]);
+    }
+
+
+    const vertexData = new Float32Array(verts.flat());
+    const indexData = new Uint32Array(ind.flat());
+
+    return {
+        vertexData,
+        indexData
+    };
+}
