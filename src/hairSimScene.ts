@@ -31,6 +31,7 @@ export const hairSim = async () =>
     const initialHairPointData = new Float32Array(numHairPoints * 4);
     const initialHairPointVertexData = new Float32Array(numHairPoints * 4 * 2);
 
+    // Initial positions
     for(let i = 0; i < numHairPoints; i++)
     {
         initialHairPointData[i * 4 + 0] = 0.0;
@@ -67,18 +68,32 @@ export const hairSim = async () =>
     const vp = WGPU.createViewProjection(gpu.canvas.width/gpu.canvas.height);
     vpMatrix = vp.viewProjectionMatrix;
 
+    // Hair uniform data
+    const HairParams = 
+    {
+        deltaTime: -0.01,
+    };
+
     // Add rotation and camera
     let rotation = vec3.fromValues(0, 0, 0);       
     let eyePosition = new Float32Array(vp.cameraPosition);
     let lightPosition = eyePosition;
 
     // Create uniform buffer and layout
-    const vertexUniformBuffer = device.createBuffer({
+    const vertexUniformBuffer = device.createBuffer(
+    {
         size: 192,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    const fragmentUniformBuffer = device.createBuffer({
+    const fragmentUniformBuffer = device.createBuffer(
+    {
         size: 32,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    const computeUniformBufferSize: number = 4 * (1);
+    const computeUniformBuffer = device.createBuffer(
+    {
+        size: computeUniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
@@ -86,6 +101,11 @@ export const hairSim = async () =>
     device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
     device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
     device.queue.writeBuffer(fragmentUniformBuffer, 16, eyePosition);
+    device.queue.writeBuffer(
+        computeUniformBuffer, 
+        0, 
+        new Float32Array([HairParams.deltaTime])
+    );
 
     // Uniform bind groups for uniforms in render pipeline and buffer
     // in compute pipeline
@@ -106,7 +126,9 @@ export const hairSim = async () =>
         computeUpdateHairPipeline,
         hairPointBuffer,
         hairPointTempWriteBuffer,
-        initialHairPointData.byteLength
+        computeUniformBuffer,
+        initialHairPointData.byteLength,
+        computeUniformBufferSize
     );
     const computeApplyHairBindGroup = WGPU.createComputeApplyHairBindGroup(
         device,

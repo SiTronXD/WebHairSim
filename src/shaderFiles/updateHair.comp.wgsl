@@ -12,6 +12,7 @@ struct Point
 };
 [[binding(0), group(0)]] var<storage, read> hairPoints : HairPoints;
 [[binding(1), group(0)]] var<storage, read_write> hairPointsTempWrite : HairPoints;
+[[binding(2), group(0)]] var<uniform> params : HairParams;
 
 [[stage(compute), workgroup_size(1)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
@@ -25,6 +26,6 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
 
         // Write to temp buffer to avoid race conditions
         hairPointsTempWrite.points[index].pos = 
-            readPos + vec4<f32>(0.0, -0.001, 0.0, 0.0);
+            readPos + vec4<f32>(0.0, params.deltaTime, 0.0, 0.0);
     }
 }

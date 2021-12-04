@@ -253,8 +253,8 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
             resource: 
             {
                 buffer: vertexUniformBuffer,
+                size: 64*3,
                 offset: 0,
-                size: 64*3
             }
         },
         {
@@ -262,8 +262,8 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
             resource: 
             {
                 buffer: fragmentUniformBuffer,
+                size: 16*2,
                 offset: 0,
-                size: 16*2
             }
         }]
     });
@@ -273,7 +273,9 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
 
 export const createComputeUpdateHairBindGroup = (device: GPUDevice, 
     computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer, 
-    hairPointTempWriteBuffer: GPUBuffer, byteLength: number) =>
+    hairPointTempWriteBuffer: GPUBuffer, 
+    computeUniformBuffer: GPUBuffer, 
+    byteLength: number, uniformBufferByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
     {
@@ -294,6 +296,15 @@ export const createComputeUpdateHairBindGroup = (device: GPUDevice,
             {
                 buffer: hairPointTempWriteBuffer,
                 size: byteLength,
+                offset: 0,
+            },
+        },
+        {
+            binding: 2,
+            resource: 
+            {
+                buffer: computeUniformBuffer,
+                size: uniformBufferByteLength,
                 offset: 0,
             },
         }],
