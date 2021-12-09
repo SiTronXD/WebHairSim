@@ -8,7 +8,8 @@ struct Point
 };
 [[binding(0), group(0)]] var<storage, read_write> hairPoints : HairPoints;
 [[binding(1), group(0)]] var<storage, read> hairPointsTempWrite : HairPoints;
-[[binding(2), group(0)]] var<storage, read_write> hairPointsVertexData : HairPoints;
+[[binding(2), group(0)]] var<storage, read_write> hairPointPrevBuffer : HairPoints;
+[[binding(3), group(0)]] var<storage, read_write> hairPointsVertexData : HairPoints;
 
 [[stage(compute), workgroup_size(1)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
@@ -18,6 +19,7 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     var currPos = hairPointsTempWrite.points[index].pos;
 
     // Write to actual buffer from temp buffer, to avoid race conditions
+    hairPointPrevBuffer.points[index].pos = hairPoints.points[index].pos;
     hairPoints.points[index].pos = currPos;
 
     // Write for vertex positions

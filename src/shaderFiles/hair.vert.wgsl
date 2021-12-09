@@ -16,15 +16,13 @@ struct Output
 
 [[stage(vertex)]]
 fn main(
-    [[location(0)]] pointPosition : vec4<f32>,
-    [[location(1)]] position : vec4<f32>,
-    [[location(2)]] normal : vec4<f32>) -> Output
+    [[location(0)]] pointPosition : vec4<f32>) -> Output
 {
     var output : Output;
     let mPosition : vec4<f32> = uniforms.modelMatrix * vec4<f32>(pointPosition.xyz, 1.0);
 
     output.vPosition = mPosition;
-    output.vNormal = uniforms.modelMatrix * vec4<f32>(normal.xyz, 0.0);
+    output.vNormal = uniforms.modelMatrix * vec4<f32>(0.0, 1.0, 0.0, 0.0);
     output.Position = uniforms.viewProjectionMatrix * mPosition;
 
     return output;

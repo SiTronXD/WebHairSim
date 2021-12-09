@@ -7,9 +7,7 @@ export const createAnimation = (draw: any,
     function step()
     {
         // Update rotation
-        rotation[0] += 0.01;
         rotation[1] += 0.01;
-        rotation[2] += 0.01;
 
         draw();
         requestAnimationFrame(step);
@@ -170,21 +168,6 @@ export const createHairRenderPipeline = (device: GPUDevice,
                         offset: 0
                     }]
                 },
-                // Positions and normals
-                {
-                    arrayStride: 4*(3+3),
-                    attributes: [
-                    {
-                        shaderLocation: 1,
-                        format: "float32x3",
-                        offset: 0
-                    },
-                    {
-                        shaderLocation: 2,
-                        format: "float32x3",
-                        offset: 4*3
-                    }]
-                }
             ]
         },
         fragment: {
@@ -201,7 +184,7 @@ export const createHairRenderPipeline = (device: GPUDevice,
         primitive: 
         {
             topology: "triangle-list",
-            cullMode: "back"
+            cullMode: "none"
         },
         depthStencil: 
         {
@@ -274,6 +257,8 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
 export const createComputeUpdateHairBindGroup = (device: GPUDevice, 
     computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer, 
     hairPointTempWriteBuffer: GPUBuffer, 
+    hairPointPrevBuffer: GPUBuffer,
+    hairPointAccelBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
     byteLength: number, uniformBufferByteLength: number) =>
 {
@@ -301,6 +286,24 @@ export const createComputeUpdateHairBindGroup = (device: GPUDevice,
         },
         {
             binding: 2,
+            resource:
+            {
+                buffer: hairPointPrevBuffer,
+                size: byteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 3,
+            resource:
+            {
+                buffer: hairPointAccelBuffer,
+                size: byteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 4,
             resource: 
             {
                 buffer: computeUniformBuffer,
@@ -316,6 +319,7 @@ export const createComputeUpdateHairBindGroup = (device: GPUDevice,
 export const createComputeApplyHairBindGroup = (device: GPUDevice, 
     computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer,
     hairPointTempWriteBuffer: GPUBuffer, 
+    hairPointPrevBuffer: GPUBuffer,
     hairPointVertexDataBuffer: GPUBuffer,
     byteLength: number, vertexDataByteLength: number) =>
 {
@@ -343,6 +347,15 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
         },
         {
             binding: 2,
+            resource:
+            {
+                buffer: hairPointPrevBuffer,
+                size: byteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 3,
             resource: 
             {
                 buffer: hairPointVertexDataBuffer,
