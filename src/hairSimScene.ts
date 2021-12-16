@@ -1,6 +1,7 @@
 import * as WGPU from './helper';
 import { vec3, mat4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertex_data';
+import { loadOBJ } from './objLoader';
 
 export const hairSim = async () =>
 {
@@ -8,11 +9,13 @@ export const hairSim = async () =>
     const device = gpu.device;
     
     // Model data buffers
-    const modelData = createSphereData(1.0, 10, 15);
+    const modelData = await loadOBJ('res/gfx/suzanne.obj');
+    //const modelData = createSphereData(1.0, 10, 15);
     const modelNumIndices = modelData?.indexData.length!;
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
+
     // Hair strand data buffers
     const numHairPoints: number = 4;
     const numHairStrands: number = 2;

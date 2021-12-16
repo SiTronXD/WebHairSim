@@ -8,7 +8,7 @@ struct Uniforms
 [[stage(fragment)]]
 fn main([[location(0)]] vPosition : vec4<f32>, [[location(1)]] vNormal : vec4<f32>) -> [[location(0)]] vec4<f32> 
 {
-    let color : vec3<f32> = vec3<f32>(1.0, 0.0, 0.0);
+    let color : vec3<f32> = vec3<f32>(0.5, 0.5, 0.6);
     let ambientIntensity : f32 = 0.2;
     let diffuseIntensity : f32 = 0.8;
 
