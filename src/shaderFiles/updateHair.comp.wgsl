@@ -26,23 +26,38 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     if(index != 0u)
     {
         var readAccel = hairPointAccelBuffer.points[index].pos;
-        var prevReadPos = hairPointPrevBuffer.points[index].pos;
-        var readPos = hairPoints.points[index].pos;
-        var prevPointPos = hairPoints.points[index - 1u].pos;
+        var prevPos = hairPointPrevBuffer.points[index].pos;
+        var currPos = hairPoints.points[index].pos;
+        var parentPointPos = hairPoints.points[index - 1u].pos;
 
-        //var nextPos = readPos + vec4<f32>(0.0, params.deltaTime, 0.0, 0.0);
-        var nextPos = readPos + readAccel * params.deltaTime;
-        var deltaPos = nextPos - prevPointPos;
+        // Verlet integration (x' = x + (x - x*))
+        // var nextPos = 2.0 * currPos - prevPos + readAccel * params.deltaTime * params.deltaTime;
+        var nextPos = currPos + (currPos - prevPos) * 0.983 + readAccel * params.deltaTime * params.deltaTime;
 
-        // Check distance between this and the previous point
+        // Constraint
+        var deltaPos = nextPos - parentPointPos;
         if(dot(deltaPos, deltaPos) > params.maxHairPointDist * params.maxHairPointDist)
         {
             deltaPos = normalize(deltaPos);
-            nextPos = prevPointPos + deltaPos * params.maxHairPointDist;
+            nextPos = parentPointPos + deltaPos * params.maxHairPointDist;
         }
 
-        // Write to temp buffer to avoid race conditions
+        // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = nextPos;
+
+        // //var nextPos = readPos + vec4<f32>(0.0, params.deltaTime, 0.0, 0.0);
+        // var nextPos = readPos + readAccel * params.deltaTime;
+        // var deltaPos = nextPos - prevPointPos;
+        // 
+        // // Check distance between this and the previous point
+        // if(dot(deltaPos, deltaPos) > params.maxHairPointDist * params.maxHairPointDist)
+        // {
+        //     deltaPos = normalize(deltaPos);
+        //     nextPos = prevPointPos + deltaPos * params.maxHairPointDist;
+        // }
+        // 
+        // // Write to temp buffer to avoid race conditions
+        // hairPointsTempWrite.points[index].pos = nextPos;
             
     }
 }

@@ -50,7 +50,7 @@ export const hairSim = async () =>
     for(let i = 0; i < numHairPoints; i++)
     {
         initialHairPointAccelData[i * 4 + 0] = 0.0;
-        initialHairPointAccelData[i * 4 + 1] = -1.0;
+        initialHairPointAccelData[i * 4 + 1] = -40.0;
         initialHairPointAccelData[i * 4 + 2] = 0.0;
         initialHairPointAccelData[i * 4 + 3] = 0.0;
     }
@@ -99,7 +99,7 @@ export const hairSim = async () =>
     // Hair uniform data
     const HairParams = 
     {
-        deltaTime: 0.01,
+        deltaTime: 0.007,
         maxHairPointDist: maxHairLength / numHairPoints,
     };
 
