@@ -126,10 +126,13 @@ export const createCubeData = () =>
     };
 };
 
-export const createHairStrandData = (numHairPoints : number) =>
+export const createHairStrandData = (numHairPoints : number, 
+    numHairStrands : number) =>
 {
+    // Vertex data is not needed, since it is created and updated dynamically.
+    // We only need the index data
     // Create vertices
-    let verts = [] as any;
+    /*let verts = [] as any;
     for(let i = 0; i < numHairPoints; i++)
     {
         // Position 1
@@ -144,25 +147,28 @@ export const createHairStrandData = (numHairPoints : number) =>
 
         // Normal 2
         verts.push([0, 1, 0]);
-    }
+    }*/
 
     // Create indices
     let ind = [] as any;
-    for(let i = 0; i < numHairPoints - 1; i++)
+    for(let j = 0; j < numHairStrands; j++)
     {
-        // Create quad
-        ind.push([
-            i*2 + 0, i*2 + 1, i*2 + 2,
-            i*2 + 1, i*2 + 3, i*2 + 2
-        ]);
+        let strandOffset = j * numHairPoints * 2;
+
+        for(let i = 0; i < numHairPoints - 1; i++)
+        {
+            // Create quad
+            ind.push([
+                strandOffset + i*2 + 0, strandOffset + i*2 + 1, strandOffset + i*2 + 2,
+                strandOffset + i*2 + 1, strandOffset + i*2 + 3, strandOffset + i*2 + 2
+            ]);
+        }
     }
 
 
-    const vertexData = new Float32Array(verts.flat());
     const indexData = new Uint32Array(ind.flat());
 
     return {
-        vertexData,
         indexData
     };
 }

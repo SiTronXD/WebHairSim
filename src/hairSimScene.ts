@@ -15,8 +15,9 @@ export const hairSim = async () =>
  
     // Hair strand data buffers
     const numHairPoints: number = 4;
+    const numHairStrands: number = 2;
     const maxHairLength: number = 4.0;
-    const hairStrandData = createHairStrandData(numHairPoints);
+    const hairStrandData = createHairStrandData(numHairPoints, numHairStrands);
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
 
@@ -28,26 +29,28 @@ export const hairSim = async () =>
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
 
     // Hair points
-    const initialHairPointData = new Float32Array(numHairPoints * 4);
-    const initialHairPointAccelData = new Float32Array(numHairPoints * 4);
-    const initialHairPointVertexData = new Float32Array(numHairPoints * 4 * 2);
+    const numAllHairPoints = numHairPoints * numHairStrands;
+    const initialHairPointData = new Float32Array(numAllHairPoints * 4);
+    const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);
+    const initialHairPointVertexData = new Float32Array(numAllHairPoints * 4 * 2);
 
     // Initial positions
-    for(let i = 0; i < numHairPoints; i++)
+    for(let i = 0; i < numAllHairPoints; i++)
     {
         initialHairPointData[i * 4 + 0] = 0.0;
         initialHairPointData[i * 4 + 1] = 0.0;
-        initialHairPointData[i * 4 + 2] = i;
+        initialHairPointData[i * 4 + 2] = i < numHairPoints ? 1 + i : -1 - (i - numHairPoints);
         initialHairPointData[i * 4 + 3] = 0.0;
     }
-    // Just init the point vertex positions to 0
-    for(let i = 0; i < numHairPoints * 4 * 2; i++)
+    // Just init the point vertex positions to 0, since
+    // these will be updated dynamically
+    for(let i = 0; i < numAllHairPoints * 4 * 2; i++)
     {
         initialHairPointVertexData[i] = 0.0;
     }
 
     // Init gravity
-    for(let i = 0; i < numHairPoints; i++)
+    for(let i = 0; i < numAllHairPoints; i++)
     {
         initialHairPointAccelData[i * 4 + 0] = 0.0;
         initialHairPointAccelData[i * 4 + 1] = -40.0;
@@ -100,7 +103,8 @@ export const hairSim = async () =>
     const HairParams = 
     {
         deltaTime: 0.007,
-        maxHairPointDist: maxHairLength / numHairPoints,
+        maxHairPointDist: maxHairLength / (numHairPoints / numHairStrands),
+        numberOfHairPoints: numHairPoints,
     };
 
     // Add rotation and camera
@@ -119,7 +123,7 @@ export const hairSim = async () =>
         size: 32,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-    const computeUniformBufferSize: number = 4 * 2;
+    const computeUniformBufferSize: number = Object.keys(HairParams).length * 4;
     const computeUniformBuffer = device.createBuffer(
     {
         size: computeUniformBufferSize,
@@ -135,7 +139,8 @@ export const hairSim = async () =>
         0, 
         new Float32Array([
             HairParams.deltaTime, 
-            HairParams.maxHairPointDist
+            HairParams.maxHairPointDist,
+            HairParams.numberOfHairPoints
         ])
     );
 
@@ -212,12 +217,12 @@ export const hairSim = async () =>
             // Hair physics
             passEncoder.setPipeline(computeUpdateHairPipeline);
             passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
-            passEncoder.dispatch(numHairPoints);
+            passEncoder.dispatch(numAllHairPoints);
 
             // Apply changes
             passEncoder.setPipeline(computeApplyHairPipeline);
             passEncoder.setBindGroup(0, computeApplyHairBindGroup);
-            passEncoder.dispatch(numHairPoints);
+            passEncoder.dispatch(numAllHairPoints);
 
             passEncoder.endPass();
         }

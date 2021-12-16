@@ -10,6 +10,7 @@ struct Point
 {
     deltaTime: f32;
     maxHairPointDist: f32;
+    numberOfHairPoints: f32;
 };
 [[binding(0), group(0)]] var<storage, read> hairPoints : HairPoints;
 [[binding(1), group(0)]] var<storage, read_write> hairPointsTempWrite : HairPoints;
@@ -23,7 +24,7 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     var index : u32 = GlobalInvocationID.x;
 
     // Don't move the first point
-    if(index != 0u)
+    if(index % u32(params.numberOfHairPoints) != 0u)
     {
         var readAccel = hairPointAccelBuffer.points[index].pos;
         var prevPos = hairPointPrevBuffer.points[index].pos;
@@ -31,8 +32,8 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
         var parentPointPos = hairPoints.points[index - 1u].pos;
 
         // Verlet integration (x' = x + (x - x*))
-        // var nextPos = 2.0 * currPos - prevPos + readAccel * params.deltaTime * params.deltaTime;
-        var nextPos = currPos + (currPos - prevPos) * 0.983 + readAccel * params.deltaTime * params.deltaTime;
+        var drag = 0.982;
+        var nextPos = currPos + (currPos - prevPos) * drag + readAccel * params.deltaTime * params.deltaTime;
 
         // Constraint
         var deltaPos = nextPos - parentPointPos;
