@@ -30,18 +30,11 @@ export const hairSim = async () =>
 
     // Hair
     const numAllHairPoints = numHairPoints * numHairStrands;
-    const initialHairPointData = new Float32Array(numAllHairPoints * 4);
+    const initialHairPointRootPosData = hairStrandData.rootPositions;
+    const initialHairPointData = hairStrandData.hairPointPositions;
     const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);
     const initialHairPointVertexData = new Float32Array(numAllHairPoints * 4 * 2);
 
-    // Initial positions
-    for(let i = 0; i < numAllHairPoints; i++)
-    {
-        initialHairPointData[i * 4 + 0] = 0.0;
-        initialHairPointData[i * 4 + 1] = 0.0;
-        initialHairPointData[i * 4 + 2] = i < numHairPoints ? 1 + i : -1 - (i - numHairPoints);
-        initialHairPointData[i * 4 + 3] = 0.0;
-    }
     // Just init the point vertex positions to 0, since
     // these will be updated dynamically
     for(let i = 0; i < numAllHairPoints * 4 * 2; i++)
@@ -74,6 +67,13 @@ export const hairSim = async () =>
     const hairPointPrevBuffer = WGPU.createGPUBuffer(
         device, 
         initialHairPointData, 
+        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
+    );
+
+    // Hair point root position buffer
+    const hairPointRootBuffer = WGPU.createGPUBuffer(
+        device,
+        initialHairPointRootPosData,
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
 
@@ -129,6 +129,12 @@ export const hairSim = async () =>
         size: computeUniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
+    const computeUniformMatrixBufferSize: number = 1 * 4 * 4 * 4;
+    const computeUniformMatrixBuffer = device.createBuffer(
+    {
+        size: computeUniformMatrixBufferSize,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
 
     // Write to uniforms
     device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
@@ -164,10 +170,14 @@ export const hairSim = async () =>
         hairPointBuffer,
         hairPointTempWriteBuffer,
         hairPointPrevBuffer,
+        hairPointRootBuffer,
         hairPointAccelBuffer,
         computeUniformBuffer,
+        computeUniformMatrixBuffer,
         initialHairPointData.byteLength,
-        computeUniformBufferSize
+        initialHairPointRootPosData.byteLength,
+        computeUniformBufferSize,
+        computeUniformMatrixBufferSize
     );
     const computeApplyHairBindGroup = WGPU.createComputeApplyHairBindGroup(
         device,
@@ -197,11 +207,14 @@ export const hairSim = async () =>
     function draw() 
     {
         // Update model matrix and normal matrix
-        WGPU.createTransforms(modelMatrix, [0,0,0], rotation);
+        WGPU.createTransforms(modelMatrix, [0,0,Math.sin(rotation[1]) * 2.0], rotation);
         mat4.invert(normalMatrix, modelMatrix);
         mat4.transpose(normalMatrix, normalMatrix);
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);
         device.queue.writeBuffer(vertexUniformBuffer, 128, normalMatrix as ArrayBuffer);
+
+        // Update uniforms for compute buffer
+        device.queue.writeBuffer(computeUniformMatrixBuffer, 0, modelMatrix as ArrayBuffer);
 
         // Recreate color attachment
         textureView = gpu.context.getCurrentTexture().createView();

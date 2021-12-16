@@ -170,15 +170,15 @@ export const createHairStrandData = (numHairPoints : number,
 
     // Get initial growth- and hair points
     const initialData = createInitialHairPoints(
-        numHairStrands, 
-        numHairStrands * numHairPoints
+        numHairPoints,
+        numHairStrands
     );
-    const growthPoints = initialData.growthPoints;
+    const rootPositions = initialData.rootPositions;
     const hairPointPositions = initialData.hairPointPositions;
 
     return {
         indexData,
-        growthPoints,
+        rootPositions,
         hairPointPositions
     };
 }

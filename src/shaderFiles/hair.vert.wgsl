@@ -1,4 +1,4 @@
-[[block]] struct Uniforms
+struct Uniforms
 {
     viewProjectionMatrix : mat4x4<f32>;
     modelMatrix : mat4x4<f32>;

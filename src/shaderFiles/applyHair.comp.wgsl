@@ -2,7 +2,7 @@ struct Point
 {
     pos : vec4<f32>;
 };
-[[block]] struct HairPoints
+struct HairPoints
 {
     points : [[stride(16)]] array<Point>;
 };

@@ -1,4 +1,4 @@
-[[block]] struct Uniforms
+struct Uniforms
 {
     viewProjectionMatrix : mat4x4<f32>;
     modelMatrix : mat4x4<f32>;
@@ -17,10 +17,10 @@ struct Output
 fn main([[location(0)]] position : vec4<f32>, [[location(1)]] normal : vec4<f32>) -> Output
 {
     var output : Output;
-    let mPosition : vec4<f32> = uniforms.modelMatrix * position;
+    let mPosition : vec4<f32> = uniforms.modelMatrix * vec4<f32>(position.xyz, 1.0);
 
     output.vPosition = mPosition;
-    output.vNormal = uniforms.modelMatrix * normal;
+    output.vNormal = uniforms.modelMatrix * vec4<f32>(normal.xyz, 0.0);
     output.Position = uniforms.viewProjectionMatrix * mPosition;
 
     return output;

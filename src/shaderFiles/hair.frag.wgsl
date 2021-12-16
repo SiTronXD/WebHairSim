@@ -1,4 +1,4 @@
-[[block]] struct Uniforms
+struct Uniforms
 {
     lightPosition : vec4<f32>;
     eyePosition : vec4<f32>;

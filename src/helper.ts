@@ -254,13 +254,20 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     return uniformBindGroup;
 }
 
-export const createComputeUpdateHairBindGroup = (device: GPUDevice, 
-    computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer, 
+export const createComputeUpdateHairBindGroup = (
+    device: GPUDevice, 
+    computePipeline: GPUComputePipeline, 
+    hairPointBuffer: GPUBuffer, 
     hairPointTempWriteBuffer: GPUBuffer, 
     hairPointPrevBuffer: GPUBuffer,
+    hairPointRootBuffer: GPUBuffer,
     hairPointAccelBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
-    byteLength: number, uniformBufferByteLength: number) =>
+    computeMatrixBuffer: GPUBuffer,
+    byteLength: number, 
+    rootByteLength: number,
+    uniformBufferByteLength: number,
+    uniformMatrixBufferByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
     {
@@ -297,19 +304,37 @@ export const createComputeUpdateHairBindGroup = (device: GPUDevice,
             binding: 3,
             resource:
             {
+                buffer: hairPointRootBuffer,
+                size: rootByteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 4,
+            resource:
+            {
                 buffer: hairPointAccelBuffer,
                 size: byteLength,
                 offset: 0,
             }
         },
         {
-            binding: 4,
+            binding: 5,
             resource: 
             {
                 buffer: computeUniformBuffer,
                 size: uniformBufferByteLength,
                 offset: 0,
             },
+        },
+        {
+            binding: 6,
+            resource:
+            {
+                buffer: computeMatrixBuffer,
+                size: uniformMatrixBufferByteLength,
+                offset: 0,
+            }
         }],
     });
 
