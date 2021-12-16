@@ -1,5 +1,6 @@
 import { SpherePosition } from './math-func';
 import { vec3 } from 'gl-matrix';
+import { createInitialHairPoints } from './hairHelper';
 
 export const createSphereData = (radius:number, u:number, v:number, 
     center:vec3 = [0,0,0]) =>
@@ -165,10 +166,19 @@ export const createHairStrandData = (numHairPoints : number,
         }
     }
 
-
     const indexData = new Uint32Array(ind.flat());
 
+    // Get initial growth- and hair points
+    const initialData = createInitialHairPoints(
+        numHairStrands, 
+        numHairStrands * numHairPoints
+    );
+    const growthPoints = initialData.growthPoints;
+    const hairPointPositions = initialData.hairPointPositions;
+
     return {
-        indexData
+        indexData,
+        growthPoints,
+        hairPointPositions
     };
 }

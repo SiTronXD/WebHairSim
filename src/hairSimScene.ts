@@ -28,7 +28,7 @@ export const hairSim = async () =>
     const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
 
-    // Hair points
+    // Hair
     const numAllHairPoints = numHairPoints * numHairStrands;
     const initialHairPointData = new Float32Array(numAllHairPoints * 4);
     const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);

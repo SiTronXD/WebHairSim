@@ -10,7 +10,7 @@
 struct Output
 {
     [[builtin(position)]] Position : vec4<f32>;
-    [[location(0)]] vPosition : vec4<f32>;
+    [[location(0)]] vWorldPosition : vec4<f32>;
     [[location(1)]] vNormal : vec4<f32>;
 };
 
@@ -19,11 +19,11 @@ fn main(
     [[location(0)]] pointPosition : vec4<f32>) -> Output
 {
     var output : Output;
-    let mPosition : vec4<f32> = uniforms.modelMatrix * vec4<f32>(pointPosition.xyz, 1.0);
+    let worldPosition : vec4<f32> = vec4<f32>(pointPosition.xyz, 1.0);
 
-    output.vPosition = mPosition;
+    output.vWorldPosition = worldPosition;
     output.vNormal = uniforms.modelMatrix * vec4<f32>(0.0, 1.0, 0.0, 0.0);
-    output.Position = uniforms.viewProjectionMatrix * mPosition;
+    output.Position = uniforms.viewProjectionMatrix * worldPosition;
 
     return output;
 }
