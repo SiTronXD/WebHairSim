@@ -346,7 +346,10 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
     hairPointTempWriteBuffer: GPUBuffer, 
     hairPointPrevBuffer: GPUBuffer,
     hairPointVertexDataBuffer: GPUBuffer,
-    byteLength: number, vertexDataByteLength: number) =>
+    applyHairUniformBuffer: GPUBuffer,
+    byteLength: number, 
+    vertexDataByteLength: number,
+    applyHairUniformBufferByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
     {
@@ -387,6 +390,15 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
                 size: vertexDataByteLength,
                 offset: 0,
             },
+        },
+        {
+            binding: 4,
+            resource:
+            {
+                buffer: applyHairUniformBuffer,
+                size: applyHairUniformBufferByteLength,
+                offset: 0,
+            }
         }],
     });
 

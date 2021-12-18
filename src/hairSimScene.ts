@@ -9,9 +9,9 @@ export const hairSim = async () =>
     const device = gpu.device;
     
     // Model data buffers
-    const modelData = await loadOBJ('res/gfx/suzanne.obj');
+    //const modelData = await loadOBJ('res/gfx/suzanne.obj');
+    const modelData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     const modelHairRootGeometryData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
-    //const modelData = createSphereData(1.0, 10, 15);
     const modelNumIndices = modelData?.indexData.length!;
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
@@ -19,8 +19,9 @@ export const hairSim = async () =>
 
     // Hair strand data buffers
     const numHairPoints: number = 4;
-    const numHairStrands: number = 2;
-    const maxHairLength: number = 4.0;
+    const numHairStrands: number = 200;
+    const hairStrandLength: number = 4.0;
+    const hairStrandWidth: number = 0.2;
     const hairStrandData = createHairStrandData(
         modelHairRootGeometryData, numHairPoints, numHairStrands
     );
@@ -109,8 +110,12 @@ export const hairSim = async () =>
     const HairParams = 
     {
         deltaTime: 0.007,
-        maxHairPointDist: maxHairLength / (numHairPoints / numHairStrands),
+        maxHairPointDist: hairStrandLength / numHairPoints,
         numberOfHairPoints: numHairPoints,
+    };
+    const ApplyHairParams = 
+    {
+        halfHairWidth: hairStrandWidth*0.5
     };
 
     // Add rotation and camera
@@ -129,6 +134,8 @@ export const hairSim = async () =>
         size: 32,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
+
+    // For update hair
     const computeUniformBufferSize: number = Object.keys(HairParams).length * 4;
     const computeUniformBuffer = device.createBuffer(
     {
@@ -142,6 +149,14 @@ export const hairSim = async () =>
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
+    // For apply hair
+    const applyHairUniformBufferSize: number = Object.keys(ApplyHairParams).length * 4;
+    const applyHairUniformBuffer = device.createBuffer(
+    {
+        size: applyHairUniformBufferSize,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+
     // Write to uniforms
     device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
     device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
@@ -149,10 +164,19 @@ export const hairSim = async () =>
     device.queue.writeBuffer(
         computeUniformBuffer, 
         0, 
-        new Float32Array([
+        new Float32Array(
+        [
             HairParams.deltaTime, 
             HairParams.maxHairPointDist,
             HairParams.numberOfHairPoints
+        ])
+    );
+    device.queue.writeBuffer(
+        applyHairUniformBuffer,
+        0,
+        new Float32Array(
+        [
+            ApplyHairParams.halfHairWidth
         ])
     );
 
@@ -192,8 +216,10 @@ export const hairSim = async () =>
         hairPointTempWriteBuffer,
         hairPointPrevBuffer,
         hairPointVertexDataBuffer,
+        applyHairUniformBuffer,
         initialHairPointData.byteLength,
-        initialHairPointVertexData.byteLength
+        initialHairPointVertexData.byteLength,
+        applyHairUniformBufferSize
     );
 
     // Color and depth textures
