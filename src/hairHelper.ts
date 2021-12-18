@@ -6,7 +6,9 @@ export const createHairStrand = (startPos: vec3 = [0,0,0],
     
 }
 
-export const createInitialHairPoints = (numHairPoints: number, 
+export const createInitialHairPoints = (
+    hairRootGeometryData: any,
+    numHairPoints: number, 
     numHairStrands: number) =>
 {
     const numAllHairPoints = numHairPoints * numHairStrands;

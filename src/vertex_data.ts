@@ -1,4 +1,4 @@
-import { SpherePosition } from './math-func';
+import { getSpherePosition } from './smath';
 import { vec3 } from 'gl-matrix';
 import { createInitialHairPoints } from './hairHelper';
 
@@ -16,7 +16,7 @@ export const createSphereData = (radius:number, u:number, v:number,
 
         for(let j = 0; j < v; j++)
         {
-            pt = SpherePosition(
+            pt = getSpherePosition(
                 radius, 
                 i * 180 / (u-1), 
                 j * 360 / (v-1), 
@@ -127,7 +127,9 @@ export const createCubeData = () =>
     };
 };
 
-export const createHairStrandData = (numHairPoints : number, 
+export const createHairStrandData = (
+    hairRootGeometryData: any,
+    numHairPoints : number, 
     numHairStrands : number) =>
 {
     // Vertex data is not needed, since it is created and updated dynamically.
@@ -170,6 +172,7 @@ export const createHairStrandData = (numHairPoints : number,
 
     // Get initial growth- and hair points
     const initialData = createInitialHairPoints(
+        hairRootGeometryData,
         numHairPoints,
         numHairStrands
     );

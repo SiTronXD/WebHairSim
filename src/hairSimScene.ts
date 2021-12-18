@@ -10,6 +10,7 @@ export const hairSim = async () =>
     
     // Model data buffers
     const modelData = await loadOBJ('res/gfx/suzanne.obj');
+    const modelHairRootGeometryData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     //const modelData = createSphereData(1.0, 10, 15);
     const modelNumIndices = modelData?.indexData.length!;
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
@@ -20,7 +21,9 @@ export const hairSim = async () =>
     const numHairPoints: number = 4;
     const numHairStrands: number = 2;
     const maxHairLength: number = 4.0;
-    const hairStrandData = createHairStrandData(numHairPoints, numHairStrands);
+    const hairStrandData = createHairStrandData(
+        modelHairRootGeometryData, numHairPoints, numHairStrands
+    );
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
 

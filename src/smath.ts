@@ -1,6 +1,6 @@
 import { vec3 } from 'gl-matrix';
 
-export const SpherePosition = (radius:number, theta:number, 
+export const getSpherePosition = (radius:number, theta:number, 
     phi:number, center:vec3 = [0,0,0]) =>
 {
     const snt = Math.sin(theta * Math.PI / 180);
