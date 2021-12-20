@@ -9,8 +9,8 @@ export const hairSim = async () =>
     const device = gpu.device;
     
     // Model data buffers
-    //const modelData = await loadOBJ('res/gfx/suzanne.obj');
-    const modelData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
+    const modelData = await loadOBJ('res/gfx/suzanne.obj');
+    //const modelData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     const modelHairRootGeometryData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     const modelNumIndices = modelData?.indexData.length!;
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
@@ -239,7 +239,12 @@ export const hairSim = async () =>
     function draw() 
     {
         // Update model matrix and normal matrix
-        WGPU.createTransforms(modelMatrix, [0,0,Math.sin(rotation[1]) * 2.0], rotation);
+        let translation: vec3 = vec3.fromValues(
+            0, 
+            0, 
+            Math.sin(rotation[1]) * 2.0
+        );
+        WGPU.createTransforms(modelMatrix, translation, rotation);
         mat4.invert(normalMatrix, modelMatrix);
         mat4.transpose(normalMatrix, normalMatrix);
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);

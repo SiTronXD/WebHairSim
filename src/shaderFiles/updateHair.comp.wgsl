@@ -32,17 +32,28 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     // "Movable" hair points
     if(index % u32(params.numberOfHairPoints) != 0u)
     {
-        var readAccel = hairPointAccelBuffer.points[index].pos;
-        var prevPos = hairPointPrevBuffer.points[index].pos;
-        var currPos = hairPoints.points[index].pos;
-        var parentPointPos = hairPoints.points[index - 1u].pos;
+        var readAccel = hairPointAccelBuffer.points[index].pos.xyz;
+        var prevPos = hairPointPrevBuffer.points[index].pos.xyz;
+        var currPos = hairPoints.points[index].pos.xyz;
+        var parentPointPos = hairPoints.points[index - 1u].pos.xyz;
 
         // Verlet integration (x' = x + (x - x*))
         var drag = 0.982;
         var nextPos = currPos + (currPos - prevPos) * drag + readAccel * params.deltaTime * params.deltaTime;
 
+        // Collision agains spheres
+        var sphereInfo = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+        var spherePos = matrixParams.modelMatrix * vec4<f32>(sphereInfo.xyz, 1.0);
+        var deltaPos = nextPos.xyz - spherePos.xyz;
+        if(dot(deltaPos, deltaPos) <= sphereInfo.w * sphereInfo.w)
+        {
+            var pointDir = normalize(deltaPos);
+
+            nextPos = spherePos.xyz + pointDir * sphereInfo.w;
+        }
+
         // Constraint
-        var deltaPos = nextPos - parentPointPos;
+        deltaPos = nextPos - parentPointPos;
         if(dot(deltaPos, deltaPos) > params.maxHairPointDist * params.maxHairPointDist)
         {
             deltaPos = normalize(deltaPos);
@@ -50,7 +61,7 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
         }
 
         // Write new position to temp buffer
-        hairPointsTempWrite.points[index].pos = nextPos;
+        hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);
             
     }
     // Root point, which should only follow the head in world space
