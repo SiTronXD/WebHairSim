@@ -4,7 +4,7 @@ import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertex_data';
 import { loadOBJ } from './objLoader';
 
-export const hairSim = async () =>
+export const hairSim = async (renderCollisionSpheres: boolean) =>
 {
     const gpu = await WGPU.initGPU();
     const device = gpu.device;
@@ -32,9 +32,10 @@ export const hairSim = async () =>
     // Collision spheres
     // xyz: position, w: radius
     let collisionSpheres = [] as any;
-    collisionSpheres.push([0, 0, 0, 1]);
-    collisionSpheres.push([1, 0.1, -0.3, 0.4]);
-    collisionSpheres.push([-1, 0.1, -0.3, 0.4]);
+    collisionSpheres.push([0, 0, 0, 1]);                // Main
+    collisionSpheres.push([1.15, 0.15, -0.3, 0.4]);     // Ear
+    collisionSpheres.push([-1.15, 0.15, -0.3, 0.4]);    // Ear
+    collisionSpheres.push([0, 0, 0.5, 0.9]);            // Face
 
     // Sphere buffers
     let allSpheresNumIndices = [] as number[];
@@ -332,13 +333,16 @@ export const hairSim = async () =>
             passEncoder.drawIndexed(modelNumIndices);
 
             // Collision spheres
-            passEncoder.setPipeline(collisionModelPipeline);
-            passEncoder.setBindGroup(0, collisionModelBindGroup);
-            for(let i = 0; i < collisionSpheres.length; i++)
+            if(renderCollisionSpheres)
             {
-                passEncoder.setVertexBuffer(0, allSpheresVertexBuffers[i]);
-                passEncoder.setIndexBuffer(allSpheresIndexBuffers[i], "uint32");
-                passEncoder.drawIndexed(allSpheresNumIndices[i]);
+                passEncoder.setPipeline(collisionModelPipeline);
+                passEncoder.setBindGroup(0, collisionModelBindGroup);
+                for(let i = 0; i < collisionSpheres.length; i++)
+                {
+                    passEncoder.setVertexBuffer(0, allSpheresVertexBuffers[i]);
+                    passEncoder.setIndexBuffer(allSpheresIndexBuffers[i], "uint32");
+                    passEncoder.drawIndexed(allSpheresNumIndices[i]);
+                }
             }
 
 
