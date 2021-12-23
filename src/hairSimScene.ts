@@ -1,5 +1,6 @@
 import * as WGPU from './helper';
-import { vec3, mat4 } from 'gl-matrix';
+import * as Shaders from './shaders';
+import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertex_data';
 import { loadOBJ } from './objLoader';
 
@@ -28,9 +29,35 @@ export const hairSim = async () =>
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
 
+    // Collision spheres
+    // xyz: position, w: radius
+    let collisionSpheres = [] as any;
+    collisionSpheres.push([0, 0, 0, 1]);
+    collisionSpheres.push([1, 0.1, -0.3, 0.4]);
+    collisionSpheres.push([-1, 0.1, -0.3, 0.4]);
+
+    // Sphere buffers
+    let allSpheresNumIndices = [] as number[];
+    let allSpheresVertexBuffers = [] as GPUBuffer[];
+    let allSpheresIndexBuffers = [] as GPUBuffer[];
+    for(let i = 0; i < collisionSpheres.length; i++)
+    {
+        const sphereModelData = createSphereData(collisionSpheres[i][3], 10, 10, [collisionSpheres[i][0], collisionSpheres[i][1], collisionSpheres[i][2]]);
+        const sphereModelNumIndices = sphereModelData?.indexData.length!;
+        const sphereModelVertexBuffer = WGPU.createGPUBuffer(device, sphereModelData?.vertexData!);
+        const sphereModelIndexBuffer = WGPU.createGPUBufferUint(device, sphereModelData?.indexData!);
+
+        // Add to arrays
+        allSpheresNumIndices.push(sphereModelNumIndices);
+        allSpheresVertexBuffers.push(sphereModelVertexBuffer);
+        allSpheresIndexBuffers.push(sphereModelIndexBuffer);
+    }
 
     // Render pipelines and compute pipeline
-    const modelPipeline = WGPU.createModelRenderPipeline(device, gpu.format);
+    const defaultShaders = Shaders.getModelShaders();
+    const redShaders = Shaders.getRedShaders();
+    const modelPipeline = WGPU.createModelRenderPipeline(device, gpu.format, defaultShaders.vertexShader, defaultShaders.fragmentShader);
+    const collisionModelPipeline = WGPU.createModelRenderPipeline(device, gpu.format, redShaders.vertexShader, redShaders.fragmentShader);
     const hairPipeline = WGPU.createHairRenderPipeline(device, gpu.format);
     const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
@@ -41,6 +68,7 @@ export const hairSim = async () =>
     const initialHairPointData = hairStrandData.hairPointPositions;
     const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);
     const initialHairPointVertexData = new Float32Array(numAllHairPoints * 4 * 2);
+    const localCollisionSpheres = new Float32Array(collisionSpheres.flat());
 
     // Just init the point vertex positions to 0, since
     // these will be updated dynamically
@@ -98,6 +126,13 @@ export const hairSim = async () =>
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
 
+    // Collision spheres data buffer
+    const collisionSpheresBuffer = WGPU.createGPUBuffer(
+        device,
+        localCollisionSpheres,
+        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
+    );
+
     // Create uniform data
     const normalMatrix = mat4.create();
     const modelMatrix = mat4.create();
@@ -135,7 +170,7 @@ export const hairSim = async () =>
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
-    // For update hair
+    // For update hair shader
     const computeUniformBufferSize: number = Object.keys(HairParams).length * 4;
     const computeUniformBuffer = device.createBuffer(
     {
@@ -188,6 +223,12 @@ export const hairSim = async () =>
         vertexUniformBuffer, 
         fragmentUniformBuffer
     );
+    const collisionModelBindGroup = WGPU.createBindGroup(
+        device, 
+        collisionModelPipeline, 
+        vertexUniformBuffer, 
+        fragmentUniformBuffer
+    );
     const hairBindGroup = WGPU.createBindGroup(
         device,
         hairPipeline,
@@ -202,10 +243,12 @@ export const hairSim = async () =>
         hairPointPrevBuffer,
         hairPointRootBuffer,
         hairPointAccelBuffer,
+        collisionSpheresBuffer,
         computeUniformBuffer,
         computeUniformMatrixBuffer,
         initialHairPointData.byteLength,
         initialHairPointRootPosData.byteLength,
+        localCollisionSpheres.byteLength,
         computeUniformBufferSize,
         computeUniformMatrixBufferSize
     );
@@ -288,12 +331,24 @@ export const hairSim = async () =>
             passEncoder.setIndexBuffer(modelIndexBuffer, "uint32");
             passEncoder.drawIndexed(modelNumIndices);
 
+            // Collision spheres
+            passEncoder.setPipeline(collisionModelPipeline);
+            passEncoder.setBindGroup(0, collisionModelBindGroup);
+            for(let i = 0; i < collisionSpheres.length; i++)
+            {
+                passEncoder.setVertexBuffer(0, allSpheresVertexBuffers[i]);
+                passEncoder.setIndexBuffer(allSpheresIndexBuffers[i], "uint32");
+                passEncoder.drawIndexed(allSpheresNumIndices[i]);
+            }
+
+
             // Hair
             passEncoder.setPipeline(hairPipeline);
             passEncoder.setBindGroup(0, hairBindGroup);    
             passEncoder.setVertexBuffer(0, hairPointVertexDataBuffer);
             passEncoder.setIndexBuffer(hairStrandIndexBuffer, "uint32");
             passEncoder.drawIndexed(hairStrandNumIndices);
+
 
             // End of pass
             passEncoder.endPass();

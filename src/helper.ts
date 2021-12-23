@@ -1,5 +1,6 @@
 import * as Shaders from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
+import { AnyMxRecord } from 'dns';
 
 export const createAnimation = (draw: any, 
     rotation: vec3 = vec3.fromValues(0,0,0)) =>
@@ -84,11 +85,12 @@ export const createRenderPassDesc = (
     return renderPassDescription;
 }
 
-export const createModelRenderPipeline = (device: GPUDevice,
-    gpuFormat: GPUTextureFormat) =>
+export const createModelRenderPipeline = (
+    device: GPUDevice,
+    gpuFormat: GPUTextureFormat,
+    vertexShader: any,
+    fragmentShader: any) =>
 {
-    const shader = Shaders.getModelShaders();
-
     // Vertex buffer is a single buffer
     const pipeline = device.createRenderPipeline(
     {
@@ -96,7 +98,7 @@ export const createModelRenderPipeline = (device: GPUDevice,
         {
             module: device.createShaderModule(
             {                    
-                code: shader.vertexShader
+                code: vertexShader
             }),
             entryPoint: "main",
             buffers:[
@@ -119,7 +121,7 @@ export const createModelRenderPipeline = (device: GPUDevice,
         {
             module: device.createShaderModule(
             {
-                code: shader.fragmentShader
+                code: fragmentShader
             }),
             entryPoint: "main",
             targets: [
@@ -262,10 +264,12 @@ export const createComputeUpdateHairBindGroup = (
     hairPointPrevBuffer: GPUBuffer,
     hairPointRootBuffer: GPUBuffer,
     hairPointAccelBuffer: GPUBuffer,
+    collisionSpheresBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
     computeMatrixBuffer: GPUBuffer,
     byteLength: number, 
     rootByteLength: number,
+    collisionSphereByteLength: number,
     uniformBufferByteLength: number,
     uniformMatrixBufferByteLength: number) =>
 {
@@ -320,6 +324,15 @@ export const createComputeUpdateHairBindGroup = (
         },
         {
             binding: 5,
+            resource:
+            {
+                buffer: collisionSpheresBuffer,
+                size: collisionSphereByteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 6,
             resource: 
             {
                 buffer: computeUniformBuffer,
@@ -328,7 +341,7 @@ export const createComputeUpdateHairBindGroup = (
             },
         },
         {
-            binding: 6,
+            binding: 7,
             resource:
             {
                 buffer: computeMatrixBuffer,

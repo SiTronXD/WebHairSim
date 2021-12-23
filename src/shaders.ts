@@ -1,6 +1,7 @@
 
 import modelVertexShader from './shaderFiles/model.vert.wgsl';
 import modelFragmentShader from './shaderFiles/model.frag.wgsl';
+import redFragmentShader from './shaderFiles/red.frag.wgsl';
 
 import hairVertexShader from './shaderFiles/hair.vert.wgsl';
 import hairFragmentShader from './shaderFiles/hair.frag.wgsl';
@@ -12,6 +13,17 @@ export const getModelShaders = () =>
 {
     const vertexShader = modelVertexShader;
     const fragmentShader = modelFragmentShader;
+
+    return { 
+        vertexShader,
+        fragmentShader 
+    };
+}
+
+export const getRedShaders = () => 
+{
+    const vertexShader = modelVertexShader;
+    const fragmentShader = redFragmentShader;
 
     return { 
         vertexShader,
