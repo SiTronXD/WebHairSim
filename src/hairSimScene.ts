@@ -279,9 +279,12 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         textureView, 
         depthTexture.createView()
     );
-    
-    function draw() 
+
+    function draw(deltaTime: number) 
     {
+        // Update rotation
+        rotation[1] += deltaTime;
+
         // Update model matrix and normal matrix
         let translation: vec3 = vec3.fromValues(
             0, 
@@ -363,5 +366,5 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     }
 
     // Make draw() loop
-    WGPU.createAnimation(draw, rotation);
+    WGPU.createRenderLoop(draw);
 }

@@ -2,17 +2,25 @@ import * as Shaders from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
 import { AnyMxRecord } from 'dns';
 
-export const createAnimation = (draw: any, 
-    rotation: vec3 = vec3.fromValues(0,0,0)) =>
+export const createRenderLoop = (draw: any) =>
 {
+    let currentTime: any = performance.now();
+    let lastTime: any = currentTime;
+    let deltaTime: number = 0.0;
+
     function step()
     {
-        // Update rotation
-        rotation[1] += 0.01;
+        // Calculate delta time
+        currentTime = performance.now();
+        deltaTime = (currentTime - lastTime) * 0.001;
+        lastTime = currentTime;
 
-        draw();
+        // Loop
+        draw(deltaTime);
         requestAnimationFrame(step);
     }
+
+    // Start loop
     requestAnimationFrame(step);
 }
 
