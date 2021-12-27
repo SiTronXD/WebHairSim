@@ -8,6 +8,7 @@ import hairFragmentShader from './shaderFiles/hair.frag.wgsl';
 
 import updateHairShader from './shaderFiles/updateHair.comp.wgsl';
 import applyHairShader from './shaderFiles/applyHair.comp.wgsl';
+import interpolateHairShader from './shaderFiles/interpolateHair.comp.wgsl';
 
 export const getModelShaders = () => 
 {
@@ -50,4 +51,9 @@ export const getUpdateHairComputeShader = () =>
 export const getApplyHairComputeShader = () =>
 {
     return applyHairShader;
+}
+
+export const getInterpolateHairComputeShader = () =>
+{
+    return interpolateHairShader;
 }

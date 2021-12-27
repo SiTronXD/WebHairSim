@@ -4,6 +4,22 @@ import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertex_data';
 import { loadOBJ } from './objLoader';
 
+const updateHairSim = async (
+    passEncoder: GPUComputePassEncoder, computeUpdateHairPipeline: GPUComputePipeline, 
+    computeUpdateHairBindGroup: GPUBindGroup, computeApplyHairPipeline: GPUComputePipeline, 
+    computeApplyHairBindGroup: GPUBindGroup, numAllHairPoints: number) =>
+{
+    // Hair physics
+    passEncoder.setPipeline(computeUpdateHairPipeline);
+    passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
+    passEncoder.dispatch(numAllHairPoints);
+
+    // Apply changes to buffers + geometry
+    passEncoder.setPipeline(computeApplyHairPipeline);
+    passEncoder.setBindGroup(0, computeApplyHairBindGroup);
+    passEncoder.dispatch(numAllHairPoints);
+}
+
 export const hairSim = async (renderCollisionSpheres: boolean) =>
 {
     const gpu = await WGPU.initGPU();
@@ -17,6 +33,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
+    const hairSimDeltaTime: number = 0.2; //1.0 / 144.0;
 
     // Hair strand data buffers
     const numHairPoints: number = 4;
@@ -62,6 +79,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const hairPipeline = WGPU.createHairRenderPipeline(device, gpu.format);
     const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
+    const computeInterpolateHairPipeline = WGPU.createComputeInterpolateHairPipeline(device);
 
     // Hair
     const numAllHairPoints = numHairPoints * numHairStrands;
@@ -145,13 +163,14 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     // Hair uniform data
     const HairParams = 
     {
-        deltaTime: 0.007,
+        deltaTime: hairSimDeltaTime,
         maxHairPointDist: hairStrandLength / numHairPoints,
         numberOfHairPoints: numHairPoints,
     };
-    const ApplyHairParams = 
+    const InterpolateHairParams = 
     {
-        halfHairWidth: hairStrandWidth*0.5
+        halfHairWidth: hairStrandWidth*0.5,
+        noInterpolation: -1.0
     };
 
     // Add rotation and camera
@@ -186,10 +205,10 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     });
 
     // For apply hair
-    const applyHairUniformBufferSize: number = Object.keys(ApplyHairParams).length * 4;
-    const applyHairUniformBuffer = device.createBuffer(
+    const interpolateHairUniformBufferSize: number = Object.keys(InterpolateHairParams).length * 4;
+    const interpolateHairUniformBuffer = device.createBuffer(
     {
-        size: applyHairUniformBufferSize,
+        size: interpolateHairUniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
@@ -205,14 +224,6 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
             HairParams.deltaTime, 
             HairParams.maxHairPointDist,
             HairParams.numberOfHairPoints
-        ])
-    );
-    device.queue.writeBuffer(
-        applyHairUniformBuffer,
-        0,
-        new Float32Array(
-        [
-            ApplyHairParams.halfHairWidth
         ])
     );
 
@@ -259,11 +270,18 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         hairPointBuffer,
         hairPointTempWriteBuffer,
         hairPointPrevBuffer,
+        initialHairPointData.byteLength,
+    );
+    const computeInterpolateHairBindGroup = WGPU.createComputeInterpolateHairBindGroup(
+        device,
+        computeInterpolateHairPipeline,
+        hairPointBuffer,
+        hairPointPrevBuffer,
         hairPointVertexDataBuffer,
-        applyHairUniformBuffer,
+        interpolateHairUniformBuffer,
         initialHairPointData.byteLength,
         initialHairPointVertexData.byteLength,
-        applyHairUniformBufferSize
+        interpolateHairUniformBufferSize
     );
 
     // Color and depth textures
@@ -279,6 +297,8 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         textureView, 
         depthTexture.createView()
     );
+
+    let timeAccumulator: number = 0.0;
 
     function draw(deltaTime: number) 
     {
@@ -311,16 +331,40 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         {
             const passEncoder = commandEncoder.beginComputePass();
 
-            // Hair physics
-            passEncoder.setPipeline(computeUpdateHairPipeline);
-            passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
+            // Handle constant time steps for hair simulation in continuous environment
+
+            // Don't let it accumulate time less than 4 fps
+            timeAccumulator += deltaTime;
+            timeAccumulator = Math.min(timeAccumulator, 0.25);
+
+            while(timeAccumulator >= hairSimDeltaTime)
+            {
+                timeAccumulator -= hairSimDeltaTime;
+
+                // "Integrate"
+                updateHairSim(
+                    passEncoder, computeUpdateHairPipeline, 
+                    computeUpdateHairBindGroup, computeApplyHairPipeline, 
+                    computeApplyHairBindGroup, numAllHairPoints
+                );
+            }
+
+            // Apply interpolated geometry
+            let interpolationFactor: number = timeAccumulator / hairSimDeltaTime;
+            device.queue.writeBuffer(
+                interpolateHairUniformBuffer,
+                0,
+                new Float32Array(
+                [
+                    InterpolateHairParams.halfHairWidth,
+                    interpolationFactor
+                ])
+            );
+            passEncoder.setPipeline(computeInterpolateHairPipeline);
+            passEncoder.setBindGroup(0, computeInterpolateHairBindGroup);
             passEncoder.dispatch(numAllHairPoints);
 
-            // Apply changes
-            passEncoder.setPipeline(computeApplyHairPipeline);
-            passEncoder.setBindGroup(0, computeApplyHairBindGroup);
-            passEncoder.dispatch(numAllHairPoints);
-
+            // End of compute pass
             passEncoder.endPass();
         }
         

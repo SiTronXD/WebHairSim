@@ -83,7 +83,7 @@ export const createInitialHairPoints = (
     {
         hairPointPositions[i * 4 + 0] = 0.0;
         hairPointPositions[i * 4 + 1] = 0.0;
-        hairPointPositions[i * 4 + 2] = i < numHairPoints ? 1 + i : -1 - (i - numHairPoints);
+        hairPointPositions[i * 4 + 2] = i % numHairPoints;
         hairPointPositions[i * 4 + 3] = 0.0;
     }
 

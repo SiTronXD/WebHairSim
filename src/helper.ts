@@ -234,6 +234,11 @@ export const createComputeApplyHairPipeline = (device: GPUDevice) =>
     return createComputePipeline(device, Shaders.getApplyHairComputeShader());
 }
 
+export const createComputeInterpolateHairPipeline = (device: GPUDevice) =>
+{
+    return createComputePipeline(device, Shaders.getInterpolateHairComputeShader());
+}
+
 export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
     vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
 {
@@ -275,7 +280,7 @@ export const createComputeUpdateHairBindGroup = (
     collisionSpheresBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
     computeMatrixBuffer: GPUBuffer,
-    byteLength: number, 
+    hairPointByteLength: number, 
     rootByteLength: number,
     collisionSphereByteLength: number,
     uniformBufferByteLength: number,
@@ -290,7 +295,7 @@ export const createComputeUpdateHairBindGroup = (
             resource: 
             {
                 buffer: hairPointBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             },
         },
@@ -299,7 +304,7 @@ export const createComputeUpdateHairBindGroup = (
             resource: 
             {
                 buffer: hairPointTempWriteBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             },
         },
@@ -308,7 +313,7 @@ export const createComputeUpdateHairBindGroup = (
             resource:
             {
                 buffer: hairPointPrevBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             }
         },
@@ -326,7 +331,7 @@ export const createComputeUpdateHairBindGroup = (
             resource:
             {
                 buffer: hairPointAccelBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             }
         },
@@ -366,11 +371,7 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
     computePipeline: GPUComputePipeline, hairPointBuffer: GPUBuffer,
     hairPointTempWriteBuffer: GPUBuffer, 
     hairPointPrevBuffer: GPUBuffer,
-    hairPointVertexDataBuffer: GPUBuffer,
-    applyHairUniformBuffer: GPUBuffer,
-    byteLength: number, 
-    vertexDataByteLength: number,
-    applyHairUniformBufferByteLength: number) =>
+    hairPointByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
     {
@@ -381,7 +382,7 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
             resource: 
             {
                 buffer: hairPointBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             },
         },
@@ -390,7 +391,7 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
             resource: 
             {
                 buffer: hairPointTempWriteBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
                 offset: 0,
             },
         },
@@ -399,12 +400,49 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
             resource:
             {
                 buffer: hairPointPrevBuffer,
-                size: byteLength,
+                size: hairPointByteLength,
+                offset: 0,
+            }
+        }],
+    });
+
+    return createdBindGroup;
+}
+
+export const createComputeInterpolateHairBindGroup = (device: GPUDevice, 
+    computePipeline: GPUComputePipeline, 
+    hairPointBuffer: GPUBuffer,
+    hairPointPrevBuffer: GPUBuffer,
+    hairPointVertexDataBuffer: GPUBuffer,
+    interpolateHairUniformBuffer: GPUBuffer,
+    hairPointByteLength: number, 
+    vertexDataByteLength: number,
+    interpolateHairUniformBufferByteLength: number) =>
+{
+    const createdBindGroup = device.createBindGroup(
+    {
+        layout: computePipeline.getBindGroupLayout(0),
+        entries: [
+        {
+            binding: 0,
+            resource: 
+            {
+                buffer: hairPointBuffer,
+                size: hairPointByteLength,
+                offset: 0,
+            },
+        },
+        {
+            binding: 1,
+            resource:
+            {
+                buffer: hairPointPrevBuffer,
+                size: hairPointByteLength,
                 offset: 0,
             }
         },
         {
-            binding: 3,
+            binding: 2,
             resource: 
             {
                 buffer: hairPointVertexDataBuffer,
@@ -413,11 +451,11 @@ export const createComputeApplyHairBindGroup = (device: GPUDevice,
             },
         },
         {
-            binding: 4,
+            binding: 3,
             resource:
             {
-                buffer: applyHairUniformBuffer,
-                size: applyHairUniformBufferByteLength,
+                buffer: interpolateHairUniformBuffer,
+                size: interpolateHairUniformBufferByteLength,
                 offset: 0,
             }
         }],
