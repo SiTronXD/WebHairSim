@@ -50,7 +50,7 @@ export const createTransforms = (
 }
 
 export const createViewProjection = (aspectRatio = 1.0, 
-    cameraPosition: vec3 = [2, 2, 4], lookDirection: vec3 = [0, 0, 0],
+    cameraPosition: vec3 = [2, 2, 4], lookAtPosition: vec3 = [0, 0, 0],
     upDirection: vec3 = [0, 1, 0]) =>
 {
     const viewMatrix = mat4.create();
@@ -58,7 +58,7 @@ export const createViewProjection = (aspectRatio = 1.0,
     const viewProjectionMatrix = mat4.create();
 
     mat4.perspective(projectionMatrix, 2*Math.PI/5, aspectRatio, 0.1, 100.0);
-    mat4.lookAt(viewMatrix, cameraPosition, lookDirection, upDirection);
+    mat4.lookAt(viewMatrix, cameraPosition, lookAtPosition, upDirection);
     mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
 
     return { 
@@ -415,9 +415,11 @@ export const createComputeInterpolateHairBindGroup = (device: GPUDevice,
     hairPointPrevBuffer: GPUBuffer,
     hairPointVertexDataBuffer: GPUBuffer,
     interpolateHairUniformBuffer: GPUBuffer,
+    interpolateHairVectorUniformBuffer: GPUBuffer,
     hairPointByteLength: number, 
     vertexDataByteLength: number,
-    interpolateHairUniformBufferByteLength: number) =>
+    interpolateHairUniformBufferByteLength: number,
+    interpolateHairVectorUniformBufferByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
     {
@@ -456,6 +458,15 @@ export const createComputeInterpolateHairBindGroup = (device: GPUDevice,
             {
                 buffer: interpolateHairUniformBuffer,
                 size: interpolateHairUniformBufferByteLength,
+                offset: 0,
+            }
+        },
+        {
+            binding: 4,
+            resource:
+            {
+                buffer: interpolateHairVectorUniformBuffer,
+                size: interpolateHairVectorUniformBufferByteLength,
                 offset: 0,
             }
         }],

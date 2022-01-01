@@ -36,12 +36,12 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const hairSimDeltaTime: number = 0.2; //1.0 / 144.0;
 
     // Hair strand data buffers
-    const numHairPoints: number = 4;
+    const numHairPointsPerStrand: number = 4;
     const numHairStrands: number = 200;
     const hairStrandLength: number = 4.0;
     const hairStrandWidth: number = 0.2;
     const hairStrandData = createHairStrandData(
-        modelHairRootGeometryData, numHairPoints, numHairStrands
+        modelHairRootGeometryData, numHairPointsPerStrand, numHairStrands
     );
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
@@ -82,7 +82,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const computeInterpolateHairPipeline = WGPU.createComputeInterpolateHairPipeline(device);
 
     // Hair
-    const numAllHairPoints = numHairPoints * numHairStrands;
+    const numAllHairPoints = numHairPointsPerStrand * numHairStrands;
     const initialHairPointRootPosData = hairStrandData.rootPositions;
     const initialHairPointData = hairStrandData.hairPointPositions;
     const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);
@@ -153,30 +153,30 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     );
 
     // Create uniform data
+    const vpCamPos: vec3 = [2, 2, 4];
+    const vp = WGPU.createViewProjection(gpu.canvas.width/gpu.canvas.height, vpCamPos);
     const normalMatrix = mat4.create();
     const modelMatrix = mat4.create();
-    let vMatrix = mat4.create();
-    let vpMatrix = mat4.create();
-    const vp = WGPU.createViewProjection(gpu.canvas.width/gpu.canvas.height);
-    vpMatrix = vp.viewProjectionMatrix;
 
     // Hair uniform data
     const HairParams = 
     {
         deltaTime: hairSimDeltaTime,
-        maxHairPointDist: hairStrandLength / numHairPoints,
-        numberOfHairPoints: numHairPoints,
+        maxHairPointDist: hairStrandLength / numHairPointsPerStrand,
+        numberOfHairPoints: numHairPointsPerStrand,
     };
     const InterpolateHairParams = 
     {
         halfHairWidth: hairStrandWidth*0.5,
-        noInterpolation: -1.0
+        noInterpolation: -1.0,
+        numHairPointsPerStrand: numHairPointsPerStrand,
+        numHairStrands: numHairStrands
     };
 
     // Add rotation and camera
     let rotation = vec3.fromValues(0, 0, 0);       
-    let eyePosition = new Float32Array(vp.cameraPosition);
-    let lightPosition = eyePosition;
+    let camPosition = new Float32Array(vp.cameraPosition);
+    let lightPosition = camPosition;
 
     // Create uniform buffer and layout
     const vertexUniformBuffer = device.createBuffer(
@@ -211,11 +211,17 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         size: interpolateHairUniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
+    const interpolateHairVectorUniformBufferSize: number = 1 * 4 * 4;
+    const interpolateHairVectorUniformBuffer = device.createBuffer(
+    {
+        size: interpolateHairVectorUniformBufferSize,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
 
     // Write to uniforms
     device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
     device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
-    device.queue.writeBuffer(fragmentUniformBuffer, 16, eyePosition);
+    device.queue.writeBuffer(fragmentUniformBuffer, 16, camPosition);
     device.queue.writeBuffer(
         computeUniformBuffer, 
         0, 
@@ -279,9 +285,11 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         hairPointPrevBuffer,
         hairPointVertexDataBuffer,
         interpolateHairUniformBuffer,
+        interpolateHairVectorUniformBuffer,
         initialHairPointData.byteLength,
         initialHairPointVertexData.byteLength,
-        interpolateHairUniformBufferSize
+        interpolateHairUniformBufferSize,
+        interpolateHairVectorUniformBufferSize
     );
 
     // Color and depth textures
@@ -349,7 +357,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
                 );
             }
 
-            // Apply interpolated geometry
+            // Buffers to apply interpolated geometry
             let interpolationFactor: number = timeAccumulator / hairSimDeltaTime;
             device.queue.writeBuffer(
                 interpolateHairUniformBuffer,
@@ -357,9 +365,14 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
                 new Float32Array(
                 [
                     InterpolateHairParams.halfHairWidth,
-                    interpolationFactor
+                    interpolationFactor,
+                    InterpolateHairParams.numHairPointsPerStrand,
+                    InterpolateHairParams.numHairStrands
                 ])
             );
+            device.queue.writeBuffer(interpolateHairVectorUniformBuffer, 0, camPosition);
+
+            // Apply interpolated geometry
             passEncoder.setPipeline(computeInterpolateHairPipeline);
             passEncoder.setBindGroup(0, computeInterpolateHairBindGroup);
             passEncoder.dispatch(numAllHairPoints);
