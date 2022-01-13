@@ -168,9 +168,10 @@ export const createHairRenderPipeline = (device: GPUDevice,
             }),
             entryPoint: "main",
             buffers: [
-                // Hair points, vec4 for read coherency
+                // Hair vertex positions, vec4 for read coherency
                 {
                     arrayStride: 4*(4),
+                    stepMode: 'vertex',
                     attributes: [
                     {
                         shaderLocation: 0,
@@ -178,6 +179,17 @@ export const createHairRenderPipeline = (device: GPUDevice,
                         offset: 0
                     }]
                 },
+                // Hair UV coordinates
+                {
+                    arrayStride: 4*(2),
+                    stepMode: 'vertex',
+                    attributes: [
+                    {
+                        shaderLocation: 1,
+                        format: "float32x2",
+                        offset: 0
+                    }]
+                }
             ]
         },
         fragment: {

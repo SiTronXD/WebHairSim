@@ -179,9 +179,24 @@ export const createHairStrandData = (
     const rootPositions = initialData.rootPositions;
     const hairPointPositions = initialData.hairPointPositions;
 
+    // UV coordinates
+    let uvCoords = [] as any;
+    for(let j = 0; j < numHairStrands; j++)
+    {
+        for(let i = 0; i < numHairPoints * 2; i++)
+        {
+            let u = (i % 2 == 0) ? 1.0 : 0.0;
+            let v = Math.floor(i / 2.0) / numHairPoints;
+            uvCoords.push([u, v]);
+        }
+    }
+
+    const uvData = new Float32Array(uvCoords.flat());
+
     return {
         indexData,
         rootPositions,
-        hairPointPositions
+        hairPointPositions,
+        uvData
     };
 }

@@ -41,12 +41,22 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     // Parent point
     if(localHairPointIndex > 0u)
     {
-        rotVec = rotVec + normalize(hairPoints.points[index - 1u].pos - currPos).xyz;
+        // Interpolate parent point
+        let parentCurrPos = hairPoints.points[index - 1u].pos;
+        let parentPrevPos = hairPointPrevBuffer.points[index - 1u].pos;
+        let interpolatedParentPos = parentPrevPos * (1.0 - params.interpolationFactor) + parentCurrPos * params.interpolationFactor;
+
+        rotVec = rotVec + normalize(interpolatedParentPos - interpolatedPos).xyz;
     }
     // Child point
     if(localHairPointIndex < u32(params.numHairPointsPerStrand) - 1u)
     {
-        rotVec = rotVec + normalize(currPos - hairPoints.points[index + 1u].pos).xyz;
+        // Interpolate child point
+        let childCurrPos = hairPoints.points[index + 1u].pos;
+        let childPrevPos = hairPointPrevBuffer.points[index + 1u].pos;
+        let interpolatedChildPos = childPrevPos * (1.0 - params.interpolationFactor) + childCurrPos * params.interpolationFactor;
+
+        rotVec = rotVec + normalize(interpolatedPos - interpolatedChildPos).xyz;
     }
     rotVec = normalize(rotVec);
 

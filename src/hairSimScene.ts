@@ -144,6 +144,11 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         initialHairPointVertexData, 
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
+    const hairPointUVDataBuffer = WGPU.createGPUBuffer(
+        device,
+        hairStrandData.uvData,
+        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
+    );
 
     // Collision spheres data buffer
     const collisionSpheresBuffer = WGPU.createGPUBuffer(
@@ -410,8 +415,11 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
             passEncoder.setPipeline(hairPipeline);
             passEncoder.setBindGroup(0, hairBindGroup);    
             passEncoder.setVertexBuffer(0, hairPointVertexDataBuffer);
+            passEncoder.setVertexBuffer(1, hairPointUVDataBuffer);
             passEncoder.setIndexBuffer(hairStrandIndexBuffer, "uint32");
             passEncoder.drawIndexed(hairStrandNumIndices);
+            // (Instancing is not used since each hair strand has multiple
+            // array entries for vertex positions)
 
 
             // End of pass
