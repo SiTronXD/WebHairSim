@@ -1,7 +1,7 @@
 import * as WGPU from './helper';
 import * as Shaders from './shaders';
 import { vec3, mat4, vec4 } from 'gl-matrix';
-import { createSphereData, createHairStrandData } from './vertex_data';
+import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
 
 const updateHairSim = async (
@@ -33,7 +33,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
-    const hairSimDeltaTime: number = 0.2; //1.0 / 144.0;
+    const hairSimDeltaTime: number = 0.05; //1.0 / 144.0;
 
     // Hair strand data buffers
     const numHairPointsPerStrand: number = 4;
@@ -252,7 +252,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         vertexUniformBuffer, 
         fragmentUniformBuffer
     );
-    const hairBindGroup = WGPU.createBindGroup(
+    const hairBindGroup = await WGPU.createHairBindGroup(
         device,
         hairPipeline,
         vertexUniformBuffer, 

@@ -1,6 +1,6 @@
 import * as Shaders from './shaders';
 import { vec3, mat4 } from 'gl-matrix';
-import { AnyMxRecord } from 'dns';
+import { getTextureData } from './textureLoader';
 
 export const createRenderLoop = (draw: any) =>
 {
@@ -275,6 +275,47 @@ export const createBindGroup = (device: GPUDevice, pipeline: GPURenderPipeline,
                 size: 16*2,
                 offset: 0,
             }
+        }]
+    });
+
+    return uniformBindGroup;
+}
+
+export const createHairBindGroup = async(device: GPUDevice, pipeline: GPURenderPipeline,
+    vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer) =>
+{
+    // Load texture and sampler
+    const textureData = await getTextureData(device, 'res/gfx/hairTexture.png');
+
+    const uniformBindGroup = device.createBindGroup(
+    {
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+        {
+            binding: 0,
+            resource: 
+            {
+                buffer: vertexUniformBuffer,
+                size: 64*3,
+                offset: 0,
+            }
+        },
+        {
+            binding: 1,
+            resource: 
+            {
+                buffer: fragmentUniformBuffer,
+                size: 16*2,
+                offset: 0,
+            }
+        },
+        {
+            binding: 2,
+            resource: textureData.sampler
+        },
+        {
+            binding: 3,
+            resource: textureData.texture.createView()
         }]
     });
 

@@ -4,6 +4,8 @@ struct Uniforms
     eyePosition : vec4<f32>;
 };
 [[binding(1), group(0)]] var<uniform> uniforms : Uniforms;
+[[binding(2), group(0)]] var textureSampler : sampler;
+[[binding(3), group(0)]] var textureData : texture_2d<f32>;
 
 [[stage(fragment)]]
 fn main(
@@ -20,7 +22,9 @@ fn main(
 
     let diffuse : f32 = diffuseIntensity * max(dot(N, L), 0.0);
 
-    let finalColor : vec3<f32> = vec3<f32>(vUV, 0.0); //color * (ambientIntensity + diffuse);
+    let textureColor = textureSample(textureData, textureSampler, vUV).rgb;
+
+    let finalColor : vec3<f32> = textureColor; //color * (ambientIntensity + diffuse);
 
     return vec4<f32>(finalColor, 1.0);
 }
