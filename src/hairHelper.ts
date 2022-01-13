@@ -1,15 +1,10 @@
 import { vec3 } from "gl-matrix";
 
-export const createHairStrand = (startPos: vec3 = [0,0,0], 
-    direction: vec3 = [0,0,0]) =>
-{
-    
-}
-
 export const createInitialHairPoints = (
     hairRootGeometryData: any,
     numHairPoints: number, 
-    numHairStrands: number) =>
+    numHairStrands: number,
+    maxHairPointDist: number) =>
 {
     const numAllHairPoints = numHairPoints * numHairStrands;
     const rootPositions = new Float32Array(numHairStrands * 4);
@@ -18,6 +13,9 @@ export const createInitialHairPoints = (
     const rootGeomVertices = hairRootGeometryData.vertexData;
     const rootGeomIndices = hairRootGeometryData.indexData;
     const vertStride = 3 * 2;
+
+    let createdRootPositions = [] as any;
+    let hairStrandNormal = [] as any;
 
     // Initial growth positions
     for(let i = 0; i < numHairStrands; i++)
@@ -68,7 +66,9 @@ export const createInitialHairPoints = (
         vec3.cross(normal, side0, side1);
         vec3.normalize(normal, normal);
 
+        // Offset position along the normal
         vec3.scaleAndAdd(randPos, randPos, normal, 0.1);
+
 
         // Apply position
         rootPositions[i * 4 + 0] = randPos[0];
@@ -76,19 +76,24 @@ export const createInitialHairPoints = (
         rootPositions[i * 4 + 2] = randPos[2];
         rootPositions[i * 4 + 3] = 0.0;
 
-        /*rootPositions[i * 4 + 0] = 0.0;
-        rootPositions[i * 4 + 1] = 0.0;
-        rootPositions[i * 4 + 2] = -(i - 0.5) * 2.0;
-        rootPositions[i * 4 + 3] = 0.0;*/
+        // Save root position and normal
+        createdRootPositions.push(randPos);
+        hairStrandNormal.push(normal);
     }
 
     // Initial hair point positions
-    for(let i = 0; i < numAllHairPoints; i++)
+    for(let j = 0; j < numHairStrands; j++)
     {
-        hairPointPositions[i * 4 + 0] = 0.0;
-        hairPointPositions[i * 4 + 1] = 0.0;
-        hairPointPositions[i * 4 + 2] = i % numHairPoints;
-        hairPointPositions[i * 4 + 3] = 0.0;
+        for(let i = 0; i < numHairPoints; i++)
+        {
+            hairPointPositions[(j * numHairPoints + i) * 4 + 0] = 
+                createdRootPositions[j][0] + i * hairStrandNormal[j][0] * maxHairPointDist;
+            hairPointPositions[(j * numHairPoints + i) * 4 + 1] = 
+                createdRootPositions[j][1] + i * hairStrandNormal[j][1] * maxHairPointDist;
+            hairPointPositions[(j * numHairPoints + i) * 4 + 2] = 
+                createdRootPositions[j][2] + i * hairStrandNormal[j][2] * maxHairPointDist;
+            hairPointPositions[(j * numHairPoints + i) * 4 + 3] = 0.0;
+        }
     }
 
     return {

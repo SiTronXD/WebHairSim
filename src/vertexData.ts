@@ -130,7 +130,8 @@ export const createCubeData = () =>
 export const createHairStrandData = (
     hairRootGeometryData: any,
     numHairPoints : number, 
-    numHairStrands : number) =>
+    numHairStrands : number,
+    maxHairPointDist: number) =>
 {
     // Vertex data is not needed, since it is created and updated dynamically.
     // We only need the index data
@@ -174,7 +175,8 @@ export const createHairStrandData = (
     const initialData = createInitialHairPoints(
         hairRootGeometryData,
         numHairPoints,
-        numHairStrands
+        numHairStrands,
+        maxHairPointDist
     );
     const rootPositions = initialData.rootPositions;
     const hairPointPositions = initialData.hairPointPositions;

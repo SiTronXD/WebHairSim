@@ -26,7 +26,10 @@ const updateHairSim = async (
     // Constrain positions to account for hair length
     passEncoder.setPipeline(computeConstrainHairPipeline);
     passEncoder.setBindGroup(0, computeConstrainHairBindGroup);
-    passEncoder.dispatch(numHairStrands);
+    for(let i = 0; i < 10; i++)
+    {
+        passEncoder.dispatch(numHairStrands);
+    }
 
     // Apply changes to buffers + geometry
     passEncoder.setPipeline(computeApplyHairPipeline);
@@ -54,8 +57,9 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const numHairStrands: number = 200;
     const hairStrandLength: number = 4.0;
     const hairStrandWidth: number = 0.2;
+    const maxHairPointDist: number = hairStrandLength / numHairPointsPerStrand;
     const hairStrandData = createHairStrandData(
-        modelHairRootGeometryData, numHairPointsPerStrand, numHairStrands
+        modelHairRootGeometryData, numHairPointsPerStrand, numHairStrands, maxHairPointDist
     );
     const hairStrandNumIndices = hairStrandData?.indexData.length!;
     const hairStrandIndexBuffer = WGPU.createGPUBufferUint(device, hairStrandData?.indexData);
@@ -182,7 +186,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const HairParams = 
     {
         deltaTime: hairSimDeltaTime,
-        maxHairPointDist: hairStrandLength / numHairPointsPerStrand,
+        maxHairPointDist: maxHairPointDist,
         numberOfHairPoints: numHairPointsPerStrand,
     };
     const InterpolateHairParams = 
