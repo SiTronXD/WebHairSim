@@ -5,14 +5,30 @@ import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
 
 const updateHairSim = async (
-    passEncoder: GPUComputePassEncoder, computeUpdateHairPipeline: GPUComputePipeline, 
-    computeUpdateHairBindGroup: GPUBindGroup, computeApplyHairPipeline: GPUComputePipeline, 
-    computeApplyHairBindGroup: GPUBindGroup, numAllHairPoints: number) =>
+    passEncoder: GPUComputePassEncoder, 
+    computeUpdateHairPipeline: GPUComputePipeline, 
+    computeUpdateHairBindGroup: GPUBindGroup, 
+    
+    computeConstrainHairPipeline: GPUComputePipeline,
+    computeConstrainHairBindGroup: GPUBindGroup,
+
+    computeApplyHairPipeline: GPUComputePipeline, 
+    computeApplyHairBindGroup: GPUBindGroup, 
+    
+    numAllHairPoints: number) =>
 {
     // Hair physics
     passEncoder.setPipeline(computeUpdateHairPipeline);
     passEncoder.setBindGroup(0, computeUpdateHairBindGroup);
     passEncoder.dispatch(numAllHairPoints);
+
+    // Constrain positions to account for hair length
+    passEncoder.setPipeline(computeConstrainHairPipeline);
+    passEncoder.setBindGroup(0, computeConstrainHairBindGroup);
+    for(let i = 0; i < 1000; i++)
+    {
+        passEncoder.dispatch(numAllHairPoints);
+    }
 
     // Apply changes to buffers + geometry
     passEncoder.setPipeline(computeApplyHairPipeline);
@@ -36,7 +52,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const hairSimDeltaTime: number = 0.05; //1.0 / 144.0;
 
     // Hair strand data buffers
-    const numHairPointsPerStrand: number = 4;
+    const numHairPointsPerStrand: number = 20;
     const numHairStrands: number = 200;
     const hairStrandLength: number = 4.0;
     const hairStrandWidth: number = 0.2;
@@ -49,10 +65,10 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     // Collision spheres
     // xyz: position, w: radius
     let collisionSpheres = [] as any;
-    collisionSpheres.push([0, 0, 0, 1]);                // Main
+    collisionSpheres.push([0, 0, 0, 1]);                // Main head
     collisionSpheres.push([1.15, 0.15, -0.3, 0.4]);     // Ear
     collisionSpheres.push([-1.15, 0.15, -0.3, 0.4]);    // Ear
-    collisionSpheres.push([0, 0, 0.5, 0.9]);            // Face
+    collisionSpheres.push([0, 0, 0.9, 1.0]);            // Face
 
     // Sphere buffers
     let allSpheresNumIndices = [] as number[];
@@ -78,6 +94,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     const collisionModelPipeline = WGPU.createModelRenderPipeline(device, gpu.format, redShaders.vertexShader, redShaders.fragmentShader);
     const hairPipeline = WGPU.createHairRenderPipeline(device, gpu.format);
     const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
+    const computeConstrainHairPipeline = WGPU.createComputeConstrainHairPipeline(device);
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
     const computeInterpolateHairPipeline = WGPU.createComputeInterpolateHairPipeline(device);
 
@@ -209,7 +226,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
 
-    // For apply hair
+    // For interpolate hair shader
     const interpolateHairUniformBufferSize: number = Object.keys(InterpolateHairParams).length * 4;
     const interpolateHairUniformBuffer = device.createBuffer(
     {
@@ -274,6 +291,14 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         localCollisionSpheres.byteLength,
         computeUniformBufferSize,
         computeUniformMatrixBufferSize
+    );
+    const computeConstrainHairBindGroup = WGPU.createComputeConstrainHairBindGroup(
+        device,
+        computeConstrainHairPipeline,
+        hairPointTempWriteBuffer,
+        computeUniformBuffer,
+        initialHairPointData.byteLength,
+        computeUniformBufferSize
     );
     const computeApplyHairBindGroup = WGPU.createComputeApplyHairBindGroup(
         device,
@@ -356,9 +381,14 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
 
                 // "Integrate"
                 updateHairSim(
-                    passEncoder, computeUpdateHairPipeline, 
-                    computeUpdateHairBindGroup, computeApplyHairPipeline, 
-                    computeApplyHairBindGroup, numAllHairPoints
+                    passEncoder, 
+                    computeUpdateHairPipeline, 
+                    computeUpdateHairBindGroup, 
+                    computeConstrainHairPipeline,
+                    computeConstrainHairBindGroup,
+                    computeApplyHairPipeline, 
+                    computeApplyHairBindGroup, 
+                    numAllHairPoints
                 );
             }
 

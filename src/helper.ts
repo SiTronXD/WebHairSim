@@ -241,6 +241,11 @@ export const createComputeUpdateHairPipeline = (device: GPUDevice) =>
     return createComputePipeline(device, Shaders.getUpdateHairComputeShader());
 }
 
+export const createComputeConstrainHairPipeline = (device: GPUDevice) =>
+{
+    return createComputePipeline(device, Shaders.getConstrainHairComputeShader());
+}
+
 export const createComputeApplyHairPipeline = (device: GPUDevice) =>
 {
     return createComputePipeline(device, Shaders.getApplyHairComputeShader());
@@ -418,6 +423,40 @@ export const createComputeUpdateHairBindGroup = (
     });
 
     return createdBindGroup;
+}
+
+export const createComputeConstrainHairBindGroup = (device: GPUDevice,
+    computePipeline: GPUComputePipeline,
+    hairPointTempWriteBuffer: GPUBuffer,
+    computeUniformBuffer: GPUBuffer,
+    hairPointByteLength: number,
+    computeUniformBufferByteLength: number) =>
+{
+    const createdBindGroup = device.createBindGroup(
+        {
+            layout: computePipeline.getBindGroupLayout(0),
+            entries: [
+            {
+                binding: 0,
+                resource: 
+                {
+                    buffer: hairPointTempWriteBuffer,
+                    size: hairPointByteLength,
+                    offset: 0,
+                },
+            },
+            {
+                binding: 1,
+                resource: 
+                {
+                    buffer: computeUniformBuffer,
+                    size: computeUniformBufferByteLength,
+                    offset: 0,
+                },
+            }],
+        });
+    
+        return createdBindGroup;
 }
 
 export const createComputeApplyHairBindGroup = (device: GPUDevice, 

@@ -47,7 +47,7 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
         var parentPointPos = hairPoints.points[index - 1u].pos.xyz;
 
         // Verlet integration (x' = x + (x - x*))
-        var drag = 0.982;
+        var drag = 0.7; //0.982;
         var nextPos = currPos + (currPos - prevPos) * drag + readAccel * params.deltaTime * params.deltaTime;
 
         // Collision against spheres
@@ -67,12 +67,12 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
         }
 
         // Constraint
-        var deltaPos = nextPos - parentPointPos;
+        /*var deltaPos = nextPos - parentPointPos;
         if(dot(deltaPos, deltaPos) > params.maxHairPointDist * params.maxHairPointDist)
         {
             deltaPos = normalize(deltaPos);
             nextPos = parentPointPos + deltaPos * params.maxHairPointDist;
-        }
+        }*/
 
         // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);

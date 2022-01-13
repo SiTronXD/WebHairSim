@@ -7,6 +7,7 @@ import hairVertexShader from './shaderFiles/hair.vert.wgsl';
 import hairFragmentShader from './shaderFiles/hair.frag.wgsl';
 
 import updateHairShader from './shaderFiles/updateHair.comp.wgsl';
+import constrainHairShader from './shaderFiles/constrainHair.comp.wgsl';
 import applyHairShader from './shaderFiles/applyHair.comp.wgsl';
 import interpolateHairShader from './shaderFiles/interpolateHair.comp.wgsl';
 
@@ -46,6 +47,11 @@ export const getHairShaders = () =>
 export const getUpdateHairComputeShader = () =>
 {
     return updateHairShader;
+}
+
+export const getConstrainHairComputeShader = () =>
+{
+    return constrainHairShader;
 }
 
 export const getApplyHairComputeShader = () =>
