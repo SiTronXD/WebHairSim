@@ -15,7 +15,8 @@ const updateHairSim = async (
     computeApplyHairPipeline: GPUComputePipeline, 
     computeApplyHairBindGroup: GPUBindGroup, 
     
-    numAllHairPoints: number) =>
+    numAllHairPoints: number,
+    numHairStrands: number) =>
 {
     // Hair physics
     passEncoder.setPipeline(computeUpdateHairPipeline);
@@ -25,10 +26,7 @@ const updateHairSim = async (
     // Constrain positions to account for hair length
     passEncoder.setPipeline(computeConstrainHairPipeline);
     passEncoder.setBindGroup(0, computeConstrainHairBindGroup);
-    for(let i = 0; i < 1000; i++)
-    {
-        passEncoder.dispatch(numAllHairPoints);
-    }
+    passEncoder.dispatch(numHairStrands);
 
     // Apply changes to buffers + geometry
     passEncoder.setPipeline(computeApplyHairPipeline);
@@ -117,7 +115,7 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
     for(let i = 0; i < numAllHairPoints; i++)
     {
         initialHairPointAccelData[i * 4 + 0] = 0.0;
-        initialHairPointAccelData[i * 4 + 1] = -40.0;
+        initialHairPointAccelData[i * 4 + 1] = -80.0;
         initialHairPointAccelData[i * 4 + 2] = 0.0;
         initialHairPointAccelData[i * 4 + 3] = 0.0;
     }
@@ -388,7 +386,8 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
                     computeConstrainHairBindGroup,
                     computeApplyHairPipeline, 
                     computeApplyHairBindGroup, 
-                    numAllHairPoints
+                    numAllHairPoints,
+                    numHairStrands
                 );
             }
 

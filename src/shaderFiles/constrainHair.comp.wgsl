@@ -21,7 +21,7 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     var index : u32 = GlobalInvocationID.x;
 
     // "Movable" hair points
-    if(index % u32(params.numberOfHairPoints) != 0u)
+    /*if(index % u32(params.numberOfHairPoints) != 0u)
     {
         // Load positions
         var currPos = hairPointsTempWrite.points[index].pos.xyz;
@@ -36,5 +36,22 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
 
         // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);
+    }*/
+
+    for(var i : u32 = 1u; i < u32(params.numberOfHairPoints); i = i + 1u)
+    {
+        // Load positions
+        var currPos = hairPointsTempWrite.points[index * u32(params.numberOfHairPoints) + i].pos.xyz;
+        var parentPointPos = hairPointsTempWrite.points[index * u32(params.numberOfHairPoints) + i - 1u].pos.xyz;
+
+        var nextPos = currPos;
+
+        // Constraint
+        var deltaPos = currPos - parentPointPos;
+        deltaPos = normalize(deltaPos);
+        nextPos = parentPointPos + deltaPos * params.maxHairPointDist;
+
+        // Write new position to temp buffer
+        hairPointsTempWrite.points[index * u32(params.numberOfHairPoints) + i].pos = vec4<f32>(nextPos, 1.0);
     }
 }

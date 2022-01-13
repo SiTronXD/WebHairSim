@@ -55,9 +55,6 @@ export const createInitialHairPoints = (
             baryV = 1.0 - baryV;
         }
 
-        /*const randPos = vertPos0 + 
-            (vertPos1 - vertPos0) * baryU + 
-            (vertPos2 - vertPos0) * baryV*/
         let randPos = vertPos0;
         let side0 = vec3.fromValues(0,0,0);
         let side1 = vec3.fromValues(0,0,0);
@@ -66,9 +63,16 @@ export const createInitialHairPoints = (
         vec3.scaleAndAdd(randPos, randPos, side0, baryU);
         vec3.scaleAndAdd(randPos, randPos, side1, baryV);
 
+        // Normal
+        let normal = vec3.fromValues(0,0,0);
+        vec3.cross(normal, side0, side1);
+        vec3.normalize(normal, normal);
+
+        vec3.scaleAndAdd(randPos, randPos, normal, 0.1);
+
         // Apply position
         rootPositions[i * 4 + 0] = randPos[0];
-        rootPositions[i * 4 + 1] = randPos[1] + 0.1;
+        rootPositions[i * 4 + 1] = randPos[1];
         rootPositions[i * 4 + 2] = randPos[2];
         rootPositions[i * 4 + 3] = 0.0;
 

@@ -66,14 +66,6 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
             }
         }
 
-        // Constraint
-        /*var deltaPos = nextPos - parentPointPos;
-        if(dot(deltaPos, deltaPos) > params.maxHairPointDist * params.maxHairPointDist)
-        {
-            deltaPos = normalize(deltaPos);
-            nextPos = parentPointPos + deltaPos * params.maxHairPointDist;
-        }*/
-
         // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);
             
