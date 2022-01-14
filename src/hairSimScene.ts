@@ -285,12 +285,10 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         hairPointPrevBuffer,
         hairPointRootBuffer,
         hairPointAccelBuffer,
-        collisionSpheresBuffer,
         computeUniformBuffer,
         computeUniformMatrixBuffer,
         initialHairPointData.byteLength,
         initialHairPointRootPosData.byteLength,
-        localCollisionSpheres.byteLength,
         computeUniformBufferSize,
         computeUniformMatrixBufferSize
     );
@@ -298,9 +296,13 @@ export const hairSim = async (renderCollisionSpheres: boolean) =>
         device,
         computeConstrainHairPipeline,
         hairPointTempWriteBuffer,
+        collisionSpheresBuffer,
         computeUniformBuffer,
+        computeUniformMatrixBuffer,
         initialHairPointData.byteLength,
-        computeUniformBufferSize
+        localCollisionSpheres.byteLength,
+        computeUniformBufferSize,
+        computeUniformMatrixBufferSize
     );
     const computeApplyHairBindGroup = WGPU.createComputeApplyHairBindGroup(
         device,

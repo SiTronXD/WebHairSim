@@ -335,12 +335,10 @@ export const createComputeUpdateHairBindGroup = (
     hairPointPrevBuffer: GPUBuffer,
     hairPointRootBuffer: GPUBuffer,
     hairPointAccelBuffer: GPUBuffer,
-    collisionSpheresBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
     computeMatrixBuffer: GPUBuffer,
     hairPointByteLength: number, 
     rootByteLength: number,
-    collisionSphereByteLength: number,
     uniformBufferByteLength: number,
     uniformMatrixBufferByteLength: number) =>
 {
@@ -395,15 +393,6 @@ export const createComputeUpdateHairBindGroup = (
         },
         {
             binding: 5,
-            resource:
-            {
-                buffer: collisionSpheresBuffer,
-                size: collisionSphereByteLength,
-                offset: 0,
-            }
-        },
-        {
-            binding: 6,
             resource: 
             {
                 buffer: computeUniformBuffer,
@@ -412,7 +401,7 @@ export const createComputeUpdateHairBindGroup = (
             },
         },
         {
-            binding: 7,
+            binding: 6,
             resource:
             {
                 buffer: computeMatrixBuffer,
@@ -428,9 +417,13 @@ export const createComputeUpdateHairBindGroup = (
 export const createComputeConstrainHairBindGroup = (device: GPUDevice,
     computePipeline: GPUComputePipeline,
     hairPointTempWriteBuffer: GPUBuffer,
+    collisionSpheresBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer,
+    computeMatrixBuffer: GPUBuffer,
     hairPointByteLength: number,
-    computeUniformBufferByteLength: number) =>
+    collisionSphereByteLength: number,
+    computeUniformBufferByteLength: number,
+    uniformMatrixBufferByteLength: number) =>
 {
     const createdBindGroup = device.createBindGroup(
         {
@@ -444,15 +437,33 @@ export const createComputeConstrainHairBindGroup = (device: GPUDevice,
                     size: hairPointByteLength,
                     offset: 0,
                 },
-            },
+            },        
             {
                 binding: 1,
+                resource:
+                {
+                    buffer: collisionSpheresBuffer,
+                    size: collisionSphereByteLength,
+                    offset: 0,
+                }
+            },
+            {
+                binding: 2,
                 resource: 
                 {
                     buffer: computeUniformBuffer,
                     size: computeUniformBufferByteLength,
                     offset: 0,
                 },
+            },    
+            {
+                binding: 3,
+                resource:
+                {
+                    buffer: computeMatrixBuffer,
+                    size: uniformMatrixBufferByteLength,
+                    offset: 0,
+                }
             }],
         });
     

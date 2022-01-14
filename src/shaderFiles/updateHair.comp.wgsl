@@ -2,17 +2,9 @@ struct Point
 {
     pos : vec4<f32>;
 };
-struct Sphere
-{
-    posRadius : vec4<f32>;
-};
 struct HairPoints
 {
     points : [[stride(16)]] array<Point>;
-};
-struct CollisionSpheres
-{
-    spheres : [[stride(16)]] array<Sphere>;
 };
 struct HairParams
 {
@@ -29,9 +21,8 @@ struct MatrixParams
 [[binding(2), group(0)]] var<storage, read> hairPointPrevBuffer : HairPoints;
 [[binding(3), group(0)]] var<storage, read> hairPointRootBuffer : HairPoints;
 [[binding(4), group(0)]] var<storage, read> hairPointAccelBuffer : HairPoints;
-[[binding(5), group(0)]] var<storage, read> collisionSpheresBuffer : CollisionSpheres;
-[[binding(6), group(0)]] var<uniform> params : HairParams;
-[[binding(7), group(0)]] var<uniform> matrixParams : MatrixParams;
+[[binding(5), group(0)]] var<uniform> params : HairParams;
+[[binding(6), group(0)]] var<uniform> matrixParams : MatrixParams;
 
 [[stage(compute), workgroup_size(1)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
@@ -47,24 +38,8 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
         var parentPointPos = hairPoints.points[index - 1u].pos.xyz;
 
         // Verlet integration (x' = x + (x - x*))
-        var drag = 0.7; //0.982;
+        var drag = 0.982;
         var nextPos = currPos + (currPos - prevPos) * drag + readAccel * params.deltaTime * params.deltaTime;
-
-        // Collision against spheres
-        for(var i : u32 = 0u; i < arrayLength(&collisionSpheresBuffer.spheres); i = i + 1u)
-        {
-            var sphereInfo = collisionSpheresBuffer.spheres[i].posRadius;
-            var spherePos = matrixParams.modelMatrix * vec4<f32>(sphereInfo.xyz, 1.0);
-            var deltaPos = nextPos.xyz - spherePos.xyz;
-
-            // Is point inside sphere?
-            if(dot(deltaPos, deltaPos) <= sphereInfo.w * sphereInfo.w)
-            {
-                var pointDir = normalize(deltaPos);
-
-                nextPos = spherePos.xyz + pointDir * sphereInfo.w;
-            }
-        }
 
         // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);
