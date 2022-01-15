@@ -23,7 +23,7 @@ struct VectorParams
 [[binding(3), group(0)]] var<uniform> params : ApplyHairParams;
 [[binding(4), group(0)]] var<uniform> vectorParams : VectorParams;
 
-[[stage(compute), workgroup_size(1)]]
+[[stage(compute), workgroup_size(4)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
 {
     var index : u32 = GlobalInvocationID.x;
@@ -64,10 +64,10 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     var toCamVec = (vectorParams.camPosition - interpolatedPos).xyz;
     var rightVec = normalize(cross(rotVec, toCamVec));
 
-    // Apply vertex positions in world space
-    hairPointsVertexData.points[index * 2u + 0u].pos = interpolatedPos + vec4<f32>(rightVec, 0.0) * params.hairHairWidth;
-    hairPointsVertexData.points[index * 2u + 1u].pos = interpolatedPos - vec4<f32>(rightVec, 0.0) * params.hairHairWidth;
+    // Width percentage
+    var widthPercent = 1.0 - f32(localHairPointIndex) / params.numHairPointsPerStrand;
 
-    // hairPointsVertexData.points[index * 2u + 0u].pos = interpolatedPos + vec4<f32>(params.hairHairWidth, 0.0, 0.0, 0.0);
-    // hairPointsVertexData.points[index * 2u + 1u].pos = interpolatedPos + vec4<f32>(-params.hairHairWidth, 0.0, 0.0, 0.0);
+    // Apply vertex positions in world space
+    hairPointsVertexData.points[index * 2u + 0u].pos = interpolatedPos + vec4<f32>(rightVec, 0.0) * params.hairHairWidth * widthPercent;
+    hairPointsVertexData.points[index * 2u + 1u].pos = interpolatedPos - vec4<f32>(rightVec, 0.0) * params.hairHairWidth * widthPercent;
 }

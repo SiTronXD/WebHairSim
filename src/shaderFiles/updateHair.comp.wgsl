@@ -24,7 +24,7 @@ struct MatrixParams
 [[binding(5), group(0)]] var<uniform> params : HairParams;
 [[binding(6), group(0)]] var<uniform> matrixParams : MatrixParams;
 
-[[stage(compute), workgroup_size(1)]]
+[[stage(compute), workgroup_size(4)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
 {
     var index : u32 = GlobalInvocationID.x;
