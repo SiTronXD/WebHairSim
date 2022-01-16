@@ -1,15 +1,15 @@
 
-import modelVertexShader from './shaderFiles/model.vert.wgsl';
-import modelFragmentShader from './shaderFiles/model.frag.wgsl';
-import redFragmentShader from './shaderFiles/red.frag.wgsl';
+import modelVertexShader from './shaderFiles/vertexShaders/model.vert.wgsl';
+import modelFragmentShader from './shaderFiles/fragmentShaders/model.frag.wgsl';
+import redFragmentShader from './shaderFiles/fragmentShaders/red.frag.wgsl';
 
-import hairVertexShader from './shaderFiles/hair.vert.wgsl';
-import hairFragmentShader from './shaderFiles/hair.frag.wgsl';
+import hairVertexShader from './shaderFiles/vertexShaders/hair.vert.wgsl';
+import hairFragmentShader from './shaderFiles/fragmentShaders/hair.frag.wgsl';
 
-import updateHairShader from './shaderFiles/updateHair.comp.wgsl';
-import constrainHairShader from './shaderFiles/constrainHair.comp.wgsl';
-import applyHairShader from './shaderFiles/applyHair.comp.wgsl';
-import interpolateHairShader from './shaderFiles/interpolateHair.comp.wgsl';
+import updateHairShader from './shaderFiles/computeShaders/updateHair.comp.wgsl';
+import constrainHairShader from './shaderFiles/computeShaders/constrainHair.comp.wgsl';
+import applyHairShader from './shaderFiles/computeShaders/applyHair.comp.wgsl';
+import interpolateHairShader from './shaderFiles/computeShaders/interpolateHair.comp.wgsl';
 
 export const getModelShaders = () => 
 {

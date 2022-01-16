@@ -5,6 +5,7 @@ import $, { ajaxSettings } from 'jquery';
 let settings = 
 {
     renderCollisionSpheres: false,
+    simulationStateInterpolation: true,
     gravityStrength: 1.0,
 };
 
@@ -22,6 +23,13 @@ $('#renderCollisionSpheres').on("click", function()
     Scene.updateSettings(settings);
 });
 
+// Toggle simulation state interpolation
+$('#simStateInterpolation').on("click", function()
+{
+    settings.simulationStateInterpolation = $("#simStateInterpolation").is(':checked');
+    Scene.updateSettings(settings);
+});
+
 // Gravity slider
 var gravitySlider = document.getElementById("gravityRange");
 var gravityOutput = document.getElementById("gravityOutputValue");
@@ -35,5 +43,5 @@ gravitySlider!.oninput = function()
     Scene.updateSettings(settings);
 
     // Display gravity value
-    gravityOutput!.innerHTML = (<HTMLInputElement> this).value + "x";
+    gravityOutput!.innerHTML = (<HTMLInputElement> this).value;
 }

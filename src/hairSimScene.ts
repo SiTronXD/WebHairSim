@@ -1,18 +1,16 @@
-import * as WGPU from './helper';
+import * as WGPU from './gpuHelper';
 import * as Shaders from './shaders';
 import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
 
-let renderCollisionSpheres: boolean = false;
-let gravityStrength: number = 1.0;
-
+let settings: any;
 export const updateSettings = async(newSettings: any) =>
 {
-    renderCollisionSpheres = newSettings.renderCollisionSpheres;
-    gravityStrength = newSettings.gravityStrength;
+    settings = newSettings;
 }
 
+// "integrate" hair simulation
 const updateHairSim = async (
     passEncoder: GPUComputePassEncoder, 
     computeUpdateHairPipeline: GPUComputePipeline, 
@@ -53,7 +51,6 @@ export const hairSim = async () =>
     
     // Model data buffers
     const modelData = await loadOBJ('res/gfx/suzanne.obj');
-    //const modelData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     const modelHairRootGeometryData = await loadOBJ('res/gfx/suzanneHairRoot.obj');
     const modelNumIndices = modelData?.indexData.length!;
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
@@ -181,7 +178,7 @@ export const hairSim = async () =>
         deltaTime: hairSimDeltaTime,
         maxHairPointDist: maxHairPointDist,
         numberOfHairPoints: numHairPointsPerStrand,
-        accelerationSpeed: baseAcceleration * gravityStrength
+        accelerationSpeed: baseAcceleration * settings.gravityStrength
     };
     const InterpolateHairParams = 
     {
@@ -343,7 +340,7 @@ export const hairSim = async () =>
         device.queue.writeBuffer(vertexUniformBuffer, 128, normalMatrix as ArrayBuffer);
 
         // Update uniforms for compute buffers
-        HairParams.accelerationSpeed = baseAcceleration * gravityStrength;
+        HairParams.accelerationSpeed = baseAcceleration * settings.gravityStrength;
         device.queue.writeBuffer(computeUniformMatrixBuffer, 0, modelMatrix as ArrayBuffer);
         device.queue.writeBuffer(
             computeUniformBuffer, 
@@ -393,7 +390,8 @@ export const hairSim = async () =>
             }
 
             // Buffers to apply interpolated geometry
-            let interpolationFactor: number = timeAccumulator / hairSimDeltaTime;
+            let interpolationFactor: number = 
+                settings.simulationStateInterpolation ? (timeAccumulator / hairSimDeltaTime) : 0.0;
             device.queue.writeBuffer(
                 interpolateHairUniformBuffer,
                 0,
@@ -428,7 +426,7 @@ export const hairSim = async () =>
             passEncoder.drawIndexed(modelNumIndices);
 
             // Collision spheres
-            if(renderCollisionSpheres)
+            if(settings.renderCollisionSpheres)
             {
                 passEncoder.setPipeline(collisionModelPipeline);
                 passEncoder.setBindGroup(0, collisionModelBindGroup);
