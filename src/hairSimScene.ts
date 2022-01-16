@@ -4,6 +4,13 @@ import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
 
+let renderCollisionSpheres: boolean = false;
+
+export const setRenderCollisionSpheres = async(_renderCollisionSpheres: boolean) =>
+{
+    renderCollisionSpheres = _renderCollisionSpheres;
+}
+
 const updateHairSim = async (
     passEncoder: GPUComputePassEncoder, 
     computeUpdateHairPipeline: GPUComputePipeline, 
@@ -37,7 +44,7 @@ const updateHairSim = async (
     passEncoder.dispatch(numAllHairPoints / 4);
 }
 
-export const hairSim = async (renderCollisionSpheres: boolean) =>
+export const hairSim = async () =>
 {
     const gpu = await WGPU.initGPU();
     const device = gpu.device;

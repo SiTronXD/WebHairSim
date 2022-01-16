@@ -1,13 +1,12 @@
-import { hairSim } from './hairSimScene';
+//import { hairSim } from './hairSimScene';
+import * as Scene from './hairSimScene';
 import $ from 'jquery';
 
-let renderCollisionSpheres = false;
-hairSim(renderCollisionSpheres);
+// Run
+Scene.hairSim();
 
 // Toggle render collision spheres
 $('#renderCollisionSpheres').on("click", function()
 {
-    renderCollisionSpheres = $("#renderCollisionSpheres").is(':checked');
-
-    hairSim(renderCollisionSpheres);
+    Scene.setRenderCollisionSpheres($("#renderCollisionSpheres").is(':checked'));
 });
