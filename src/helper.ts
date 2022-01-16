@@ -307,19 +307,10 @@ export const createHairBindGroup = async(device: GPUDevice, pipeline: GPURenderP
         },
         {
             binding: 1,
-            resource: 
-            {
-                buffer: fragmentUniformBuffer,
-                size: 16*2,
-                offset: 0,
-            }
-        },
-        {
-            binding: 2,
             resource: textureData.sampler
         },
         {
-            binding: 3,
+            binding: 2,
             resource: textureData.texture.createView()
         }]
     });
@@ -334,7 +325,6 @@ export const createComputeUpdateHairBindGroup = (
     hairPointTempWriteBuffer: GPUBuffer, 
     hairPointPrevBuffer: GPUBuffer,
     hairPointRootBuffer: GPUBuffer,
-    hairPointAccelBuffer: GPUBuffer,
     computeUniformBuffer: GPUBuffer, 
     computeMatrixBuffer: GPUBuffer,
     hairPointByteLength: number, 
@@ -384,15 +374,6 @@ export const createComputeUpdateHairBindGroup = (
         },
         {
             binding: 4,
-            resource:
-            {
-                buffer: hairPointAccelBuffer,
-                size: hairPointByteLength,
-                offset: 0,
-            }
-        },
-        {
-            binding: 5,
             resource: 
             {
                 buffer: computeUniformBuffer,
@@ -401,7 +382,7 @@ export const createComputeUpdateHairBindGroup = (
             },
         },
         {
-            binding: 6,
+            binding: 5,
             resource:
             {
                 buffer: computeMatrixBuffer,

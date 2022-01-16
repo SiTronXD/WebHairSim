@@ -19,6 +19,7 @@ struct HairParams
     deltaTime: f32;
     maxHairPointDist: f32;
     numberOfHairPoints: f32;
+    accelerationSpeed: f32;
 };
 struct MatrixParams
 {

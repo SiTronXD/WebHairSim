@@ -11,6 +11,7 @@ struct HairParams
     deltaTime: f32;
     maxHairPointDist: f32;
     numberOfHairPoints: f32;
+    accelerationSpeed: f32;
 };
 struct MatrixParams
 {
@@ -20,9 +21,8 @@ struct MatrixParams
 [[binding(1), group(0)]] var<storage, read_write> hairPointsTempWrite : HairPoints;
 [[binding(2), group(0)]] var<storage, read> hairPointPrevBuffer : HairPoints;
 [[binding(3), group(0)]] var<storage, read> hairPointRootBuffer : HairPoints;
-[[binding(4), group(0)]] var<storage, read> hairPointAccelBuffer : HairPoints;
-[[binding(5), group(0)]] var<uniform> params : HairParams;
-[[binding(6), group(0)]] var<uniform> matrixParams : MatrixParams;
+[[binding(4), group(0)]] var<uniform> params : HairParams;
+[[binding(5), group(0)]] var<uniform> matrixParams : MatrixParams;
 
 [[stage(compute), workgroup_size(4)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) 
@@ -32,14 +32,14 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>)
     // "Movable" hair points
     if(index % u32(params.numberOfHairPoints) != 0u)
     {
-        var readAccel = hairPointAccelBuffer.points[index].pos.xyz;
         var prevPos = hairPointPrevBuffer.points[index].pos.xyz;
         var currPos = hairPoints.points[index].pos.xyz;
         var parentPointPos = hairPoints.points[index - 1u].pos.xyz;
 
-        // Verlet integration (x' = x + (x - x*))
+        // Verlet integration (x' = x + (x - x*) + a * dt^2)
         var drag = 0.982;
-        var nextPos = currPos + (currPos - prevPos) * drag + readAccel * params.deltaTime * params.deltaTime;
+        var nextPos = currPos + (currPos - prevPos) * drag + 
+            vec3<f32>(0.0, -1.0, 0.0) * params.accelerationSpeed * params.deltaTime * params.deltaTime;
 
         // Write new position to temp buffer
         hairPointsTempWrite.points[index].pos = vec4<f32>(nextPos, 1.0);

@@ -5,10 +5,12 @@ import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
 
 let renderCollisionSpheres: boolean = false;
+let gravityStrength: number = 1.0;
 
-export const setRenderCollisionSpheres = async(_renderCollisionSpheres: boolean) =>
+export const updateSettings = async(newSettings: any) =>
 {
-    renderCollisionSpheres = _renderCollisionSpheres;
+    renderCollisionSpheres = newSettings.renderCollisionSpheres;
+    gravityStrength = newSettings.gravityStrength;
 }
 
 const updateHairSim = async (
@@ -57,7 +59,8 @@ export const hairSim = async () =>
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
-    const hairSimDeltaTime: number = 0.05; //1.0 / 144.0;
+    const hairSimDeltaTime: number = 0.05;
+    const baseAcceleration: number = 5.0;
 
     // Hair strand data buffers
     const numHairPointsPerStrand: number = 32;
@@ -111,7 +114,6 @@ export const hairSim = async () =>
     const numAllHairPoints = numHairPointsPerStrand * numHairStrands;
     const initialHairPointRootPosData = hairStrandData.rootPositions;
     const initialHairPointData = hairStrandData.hairPointPositions;
-    const initialHairPointAccelData = new Float32Array(numAllHairPoints * 4);
     const initialHairPointVertexData = new Float32Array(numAllHairPoints * 4 * 2);
     const localCollisionSpheres = new Float32Array(collisionSpheres.flat());
 
@@ -120,15 +122,6 @@ export const hairSim = async () =>
     for(let i = 0; i < numAllHairPoints * 4 * 2; i++)
     {
         initialHairPointVertexData[i] = 0.0;
-    }
-
-    // Init gravity
-    for(let i = 0; i < numAllHairPoints; i++)
-    {
-        initialHairPointAccelData[i * 4 + 0] = 0.0;
-        initialHairPointAccelData[i * 4 + 1] = -5.0;
-        initialHairPointAccelData[i * 4 + 2] = 0.0;
-        initialHairPointAccelData[i * 4 + 3] = 0.0;
     }
 
     // Hair point position buffers
@@ -154,13 +147,6 @@ export const hairSim = async () =>
     const hairPointRootBuffer = WGPU.createGPUBuffer(
         device,
         initialHairPointRootPosData,
-        GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
-    );
-
-    // Hair point acceleration buffer
-    const hairPointAccelBuffer = WGPU.createGPUBuffer(
-        device, 
-        initialHairPointAccelData, 
         GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE
     );
 
@@ -195,6 +181,7 @@ export const hairSim = async () =>
         deltaTime: hairSimDeltaTime,
         maxHairPointDist: maxHairPointDist,
         numberOfHairPoints: numHairPointsPerStrand,
+        accelerationSpeed: baseAcceleration * gravityStrength
     };
     const InterpolateHairParams = 
     {
@@ -253,17 +240,7 @@ export const hairSim = async () =>
     device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
     device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
     device.queue.writeBuffer(fragmentUniformBuffer, 16, camPosition);
-    device.queue.writeBuffer(
-        computeUniformBuffer, 
-        0, 
-        new Float32Array(
-        [
-            HairParams.deltaTime, 
-            HairParams.maxHairPointDist,
-            HairParams.numberOfHairPoints
-        ])
-    );
-
+    
     // Uniform bind groups for uniforms in render pipeline and buffer
     // in compute pipeline
     const modelBindGroup = WGPU.createBindGroup(
@@ -291,7 +268,6 @@ export const hairSim = async () =>
         hairPointTempWriteBuffer,
         hairPointPrevBuffer,
         hairPointRootBuffer,
-        hairPointAccelBuffer,
         computeUniformBuffer,
         computeUniformMatrixBuffer,
         initialHairPointData.byteLength,
@@ -366,8 +342,20 @@ export const hairSim = async () =>
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);
         device.queue.writeBuffer(vertexUniformBuffer, 128, normalMatrix as ArrayBuffer);
 
-        // Update uniforms for compute buffer
+        // Update uniforms for compute buffers
+        HairParams.accelerationSpeed = baseAcceleration * gravityStrength;
         device.queue.writeBuffer(computeUniformMatrixBuffer, 0, modelMatrix as ArrayBuffer);
+        device.queue.writeBuffer(
+            computeUniformBuffer, 
+            0, 
+            new Float32Array(
+            [
+                HairParams.deltaTime, 
+                HairParams.maxHairPointDist,
+                HairParams.numberOfHairPoints,
+                HairParams.accelerationSpeed
+            ])
+        );
 
         // Recreate color attachment
         textureView = gpu.context.getCurrentTexture().createView();
