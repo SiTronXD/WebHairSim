@@ -47,7 +47,23 @@ const updateHairSim = async (
 export const hairSim = async () =>
 {
     const gpu = await WGPU.initGPU();
-    const device = gpu.device;
+
+    // Check if WebGPU is not supported
+    if(!gpu.webGPUSupported)
+    {
+        document.getElementById("MainText")!.innerHTML = `Your current browser does not support WebGPU! 
+            Make sure you are on a system with WebGPU enabled. Currently,
+            SPIR-WebGPU is only supported in <a href="https://www.google.com/chrome/canary">Chrome canary</a>
+            with the flag "enable-unsafe-webgpu" enabled. See the
+            <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status">
+            Implementation Status</a> page for more details.`;
+    }
+
+    // WebGPU is supported
+    const device = gpu.device!;
+    const canvas = gpu.canvas!;
+    const format = gpu.format!; 
+    const context = gpu.context!;
     
     // Model data buffers
     const modelData = await loadOBJ('res/gfx/suzanne.obj');
@@ -99,9 +115,9 @@ export const hairSim = async () =>
     // Render pipelines and compute pipeline
     const defaultShaders = Shaders.getModelShaders();
     const redShaders = Shaders.getRedShaders();
-    const modelPipeline = WGPU.createModelRenderPipeline(device, gpu.format, defaultShaders.vertexShader, defaultShaders.fragmentShader);
-    const collisionModelPipeline = WGPU.createModelRenderPipeline(device, gpu.format, redShaders.vertexShader, redShaders.fragmentShader);
-    const hairPipeline = WGPU.createHairRenderPipeline(device, gpu.format);
+    const modelPipeline = WGPU.createModelRenderPipeline(device, format, defaultShaders.vertexShader, defaultShaders.fragmentShader);
+    const collisionModelPipeline = WGPU.createModelRenderPipeline(device, format, redShaders.vertexShader, redShaders.fragmentShader);
+    const hairPipeline = WGPU.createHairRenderPipeline(device, format);
     const computeUpdateHairPipeline = WGPU.createComputeUpdateHairPipeline(device);
     const computeConstrainHairPipeline = WGPU.createComputeConstrainHairPipeline(device);
     const computeApplyHairPipeline = WGPU.createComputeApplyHairPipeline(device);
@@ -168,7 +184,7 @@ export const hairSim = async () =>
 
     // Create uniform data
     const vpCamPos: vec3 = [2, 2, 4];
-    const vp = WGPU.createViewProjection(gpu.canvas.width/gpu.canvas.height, vpCamPos);
+    const vp = WGPU.createViewProjection(canvas.width / canvas.height, vpCamPos);
     const normalMatrix = mat4.create();
     const modelMatrix = mat4.create();
 
@@ -307,9 +323,9 @@ export const hairSim = async () =>
     );
 
     // Color and depth textures
-    let textureView = gpu.context.getCurrentTexture().createView();
+    let textureView = context.getCurrentTexture().createView();
     const depthTexture = device.createTexture({
-        size: [gpu.canvas.width, gpu.canvas.height, 1],
+        size: [canvas.width, canvas.height, 1],
         format: "depth24plus",
         usage: GPUTextureUsage.RENDER_ATTACHMENT
     });
@@ -355,7 +371,7 @@ export const hairSim = async () =>
         );
 
         // Recreate color attachment
-        textureView = gpu.context.getCurrentTexture().createView();
+        textureView = context.getCurrentTexture().createView();
         renderPassDescription.colorAttachments[0].view = textureView;
 
         // Start passes
