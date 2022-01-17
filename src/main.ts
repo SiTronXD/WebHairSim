@@ -1,4 +1,3 @@
-//import { hairSim } from './hairSimScene';
 import * as Scene from './hairSimScene';
 import $, { ajaxSettings } from 'jquery';
 
@@ -11,7 +10,7 @@ let settings =
 
 // Update settings and run
 Scene.updateSettings(settings);
-Scene.hairSim();
+Scene.hairSim();    // Main point of entry
 
 
 // ---------- HTML elements ----------

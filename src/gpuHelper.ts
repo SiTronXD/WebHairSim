@@ -608,7 +608,8 @@ export const initGPU = async () => {
             device: undefined, 
             canvas: undefined, 
             format: undefined, 
-            context: undefined
+            context: undefined, 
+            framebufferSize: undefined
         };
     }
 
@@ -618,7 +619,7 @@ export const initGPU = async () => {
     const context = canvas.getContext('webgpu') as unknown as GPUCanvasContext;
 
     const devicePixelRatio = window.devicePixelRatio || 1;
-    const size = [
+    const framebufferSize = [
         canvas.clientWidth * devicePixelRatio,
         canvas.clientHeight * devicePixelRatio
     ];
@@ -628,7 +629,7 @@ export const initGPU = async () => {
     {
         device: device,
         format: format,
-        size: size
+        size: framebufferSize
     });
 
     return { 
@@ -636,6 +637,7 @@ export const initGPU = async () => {
         device, 
         canvas, 
         format, 
-        context 
+        context,
+        framebufferSize
     };
 }

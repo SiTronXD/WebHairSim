@@ -64,6 +64,7 @@ export const hairSim = async () =>
     const canvas = gpu.canvas!;
     const format = gpu.format!; 
     const context = gpu.context!;
+    const framebufferSize = gpu.framebufferSize!;
     
     // Model data buffers
     const modelData = await loadOBJ('res/gfx/suzanne.obj');
@@ -325,7 +326,7 @@ export const hairSim = async () =>
     // Color and depth textures
     let textureView = context.getCurrentTexture().createView();
     const depthTexture = device.createTexture({
-        size: [canvas.width, canvas.height, 1],
+        size: [framebufferSize[0], framebufferSize[1], 1],
         format: "depth24plus",
         usage: GPUTextureUsage.RENDER_ATTACHMENT
     });
