@@ -1,8 +1,10 @@
 import * as WGPU from './gpuHelper';
 import * as Shaders from './shaders';
+import * as SMath from './smath';
 import { vec3, mat4, vec4 } from 'gl-matrix';
 import { createSphereData, createHairStrandData } from './vertexData';
 import { loadOBJ } from './objLoader';
+import { defaultMaxListeners } from 'events';
 
 let settings: any;
 export const updateSettings = async(newSettings: any) =>
@@ -184,8 +186,15 @@ export const hairSim = async () =>
     );
 
     // Create uniform data
-    const vpCamPos: vec3 = [2, 2, 4];
-    const vp = WGPU.createViewProjection(canvas.width / canvas.height, vpCamPos);
+    let camYawAngle = 3.1415 * 0.3;
+    let camPitchAngle = 0.4;
+    let camZoomRadius = 5.0;
+    let vpCamPos: vec3 = [
+        camZoomRadius * Math.cos(camYawAngle) * Math.cos(camPitchAngle), 
+        camZoomRadius * Math.sin(camPitchAngle), 
+        camZoomRadius * Math.sin(camYawAngle) * Math.cos(camPitchAngle)
+    ];
+    let vp = WGPU.createViewProjection(canvas.width / canvas.height, vpCamPos);
     const normalMatrix = mat4.create();
     const modelMatrix = mat4.create();
 
@@ -206,7 +215,7 @@ export const hairSim = async () =>
     };
 
     // Add rotation and camera
-    let rotation = vec3.fromValues(0, 0, 0);       
+    let modelRotation = vec3.fromValues(0, 0, 0);       
     let camPosition = new Float32Array(vp.cameraPosition);
     let lightPosition = camPosition;
 
@@ -249,11 +258,6 @@ export const hairSim = async () =>
         size: interpolateHairVectorUniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
-
-    // Write to uniforms
-    device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
-    device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
-    device.queue.writeBuffer(fragmentUniformBuffer, 16, camPosition);
     
     // Uniform bind groups for uniforms in render pipeline and buffer
     // in compute pipeline
@@ -339,22 +343,76 @@ export const hairSim = async () =>
 
     let timeAccumulator: number = 0.0;
 
+    // Track mouse
+    let mouseX: number = 0.0;
+    let mouseY: number = 0.0;
+    let lastMouseX: number = mouseX;
+    let lastMouseY: number = mouseY;
+    let mouseZoom: number = 0.0;
+    let mouseDown: boolean = false;
+    document.addEventListener('mousemove', (event) => 
+    {
+        let rect = canvas.getBoundingClientRect();
+        mouseX = event.clientX - rect.left;
+        mouseY = event.clientY - rect.top;
+    });
+    document.addEventListener('wheel', (event) => 
+    { 
+        if(mouseX >= 0 && mouseX < canvas.width && 
+            mouseY >= 0 && mouseY < canvas.height)
+        {
+            mouseZoom += event.deltaY; 
+        }
+    });
+    document.body.onmousedown = function() { mouseDown = true; }
+    document.body.onmouseup = function() { mouseDown = false; }
+
     function draw(deltaTime: number) 
     {
         // Update rotation
-        rotation[1] += deltaTime;
+        modelRotation[1] += deltaTime;
+
+        console.log("X: " + mouseX + "   Y: " + mouseY);
+
+        // Zoom camera
+        camZoomRadius = 5 + mouseZoom * 0.005;
+        camZoomRadius = Math.max(camZoomRadius, 1.0);
+
+        // Rotate camera
+        if(mouseDown && mouseX >= 0 && mouseX < canvas.width && 
+            mouseY >= 0 && mouseY < canvas.height)
+        {
+            // Controls
+            camYawAngle += (mouseX - lastMouseX) * 0.005;
+            camPitchAngle += (mouseY - lastMouseY) * 0.005;
+            camPitchAngle = SMath.clamp(camPitchAngle, -3.1415 * 0.45, 3.1415 * 0.45);
+        }
+        
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        // Update position view projection matrix
+        vpCamPos = [
+            camZoomRadius * Math.cos(camYawAngle) * Math.cos(camPitchAngle), 
+            camZoomRadius * Math.sin(camPitchAngle), 
+            camZoomRadius * Math.sin(camYawAngle) * Math.cos(camPitchAngle)
+        ];
+        vp = WGPU.createViewProjection(canvas.width / canvas.height, vpCamPos);
 
         // Update model matrix and normal matrix
-        let translation: vec3 = vec3.fromValues(
+        let modelTranslation: vec3 = vec3.fromValues(
             0, 
-            Math.abs(2.0 * Math.sin(rotation[1])), 
-            Math.sin(rotation[1]) * 2.0
+            Math.abs(2.0 * Math.sin(modelRotation[1])) - 0.5, 
+            Math.sin(modelRotation[1]) * 2.0
         );
-        WGPU.createTransforms(modelMatrix, translation, rotation);
+        WGPU.createTransforms(modelMatrix, modelTranslation, modelRotation);
         mat4.invert(normalMatrix, modelMatrix);
         mat4.transpose(normalMatrix, normalMatrix);
+        device.queue.writeBuffer(vertexUniformBuffer, 0, vp.viewProjectionMatrix as ArrayBuffer);
         device.queue.writeBuffer(vertexUniformBuffer, 64, modelMatrix as ArrayBuffer);
         device.queue.writeBuffer(vertexUniformBuffer, 128, normalMatrix as ArrayBuffer);
+        device.queue.writeBuffer(fragmentUniformBuffer, 0, lightPosition);
+        device.queue.writeBuffer(fragmentUniformBuffer, 16, camPosition);
 
         // Update uniforms for compute buffers
         HairParams.accelerationSpeed = baseAcceleration * settings.gravityStrength;
