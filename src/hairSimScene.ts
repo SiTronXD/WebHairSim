@@ -53,12 +53,9 @@ export const hairSim = async () =>
     // Check if WebGPU is not supported
     if(!gpu.webGPUSupported)
     {
-        document.getElementById("MainText")!.innerHTML = `Your current browser does not support WebGPU! 
-            Make sure you are on a system with WebGPU enabled. Currently,
-            SPIR-WebGPU is only supported in <a href="https://www.google.com/chrome/canary">Chrome canary</a>
-            with the flag "enable-unsafe-webgpu" enabled. See the
-            <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status">
-            Implementation Status</a> page for more details.`;
+        document.getElementById("MainText")!.innerHTML = `This browser does not support WebGPU. 
+            Currently, <a href="https://www.google.com/chrome/canary">Chrome Canary</a> is the only browser
+            which supports WebGPU, with the flag "enable-unsafe-webgpu" enabled.`;
     }
 
     // WebGPU is supported
