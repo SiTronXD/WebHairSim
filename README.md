@@ -1,4 +1,4 @@
-![github-small](dist/res/gfx/Showcase2.gif)
+![github-small](dist/res/gfx/Showcase1.png)
 
 # Features
 * GPU-based hair strand physics using [Verlet integration](https://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/Jakobsen.pdf)
@@ -21,3 +21,5 @@ As the project is very barebones and simple, there are a lot of improvements tha
 * Proper anti-aliasing
 * More elaborate user controls
 * Predefined hair styles
+
+![github-small](dist/res/gfx/Showcase2.gif)
