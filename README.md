@@ -13,6 +13,11 @@
 * Use the scroll wheel to zoom
 * Different parameters can be controlled in realtime from the UI
 
+# The project
+The project was created in Typescript and WGSL, using WebGPU, WebPack, Node.js, Visual Studio Code together with Live Server and WGSL syntax highlight extensions.
+Compile and bundle with the command "npm run prod", and run the live-server to view the application.
+
+![github-small](dist/res/gfx/Showcase2.gif)
 # Potential improvements
 As the project is very barebones and simple, there are a lot of improvements that could be made. Some examples are:
 * Realtime shading using the Marschner model
@@ -22,4 +27,14 @@ As the project is very barebones and simple, there are a lot of improvements tha
 * More elaborate user controls
 * Predefined hair styles
 
-![github-small](dist/res/gfx/Showcase2.gif)
+# Helpful resources
+WebGPU: 
+* https://www.youtube.com/channel/UCg14XfqXim0vpgabU3T7tRg/videos
+* https://austin-eng.com/webgpu-samples/
+* https://www.w3.org/TR/webgpu/
+
+Hair simulation/rendering:
+* https://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/Jakobsen.pdf
+* https://gafferongames.com/post/fix_your_timestep/
+* https://developer.nvidia.com/gpugems/gpugems2/part-iii-high-quality-rendering/chapter-23-hair-animation-and-rendering-nalu-demo
+* https://www.realtimerendering.com/
