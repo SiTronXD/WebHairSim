@@ -72,7 +72,7 @@ export const hairSim = async () =>
     const modelVertexBuffer = WGPU.createGPUBuffer(device, modelData?.vertexData!);
     const modelIndexBuffer = WGPU.createGPUBufferUint(device, modelData?.indexData!);
  
-    const hairSimDeltaTime: number = 0.05;
+
     const baseAcceleration: number = 5.0;
 
     // Hair strand data buffers
@@ -90,7 +90,7 @@ export const hairSim = async () =>
     // Collision spheres
     // xyz: position, w: radius
     let collisionSpheres = [] as any;
-    collisionSpheres.push([0, 0, 0, 1]);                // Main head
+    collisionSpheres.push([0, 0, 0, 1.0]);              // Main head
     collisionSpheres.push([1.16, 0.15, -0.4, 0.4]);     // Ear
     collisionSpheres.push([-1.16, 0.15, -0.4, 0.4]);    // Ear
     collisionSpheres.push([0, 0, 0.9, 1.0]);            // Face
@@ -198,7 +198,7 @@ export const hairSim = async () =>
     // Hair uniform data
     const HairParams = 
     {
-        deltaTime: hairSimDeltaTime,
+        deltaTime: settings.hairSimDeltaTime,
         maxHairPointDist: maxHairPointDist,
         numberOfHairPoints: numHairPointsPerStrand,
         accelerationSpeed: baseAcceleration * settings.gravityStrength
@@ -443,9 +443,9 @@ export const hairSim = async () =>
             timeAccumulator += deltaTime;
             timeAccumulator = Math.min(timeAccumulator, 0.25);
 
-            while(timeAccumulator >= hairSimDeltaTime)
+            while(timeAccumulator >= settings.hairSimDeltaTime)
             {
-                timeAccumulator -= hairSimDeltaTime;
+                timeAccumulator -= settings.hairSimDeltaTime;
 
                 // "Integrate"
                 updateHairSim(
@@ -463,7 +463,7 @@ export const hairSim = async () =>
 
             // Buffers to apply interpolated geometry
             let interpolationFactor: number = 
-                settings.simulationStateInterpolation ? (timeAccumulator / hairSimDeltaTime) : 0.0;
+                settings.simulationStateInterpolation ? (timeAccumulator / settings.hairSimDeltaTime) : 0.0;
             device.queue.writeBuffer(
                 interpolateHairUniformBuffer,
                 0,

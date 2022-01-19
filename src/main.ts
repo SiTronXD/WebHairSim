@@ -6,6 +6,7 @@ let settings =
     renderCollisionSpheres: false,
     simulationStateInterpolation: true,
     gravityStrength: 1.0,
+    hairSimDeltaTime: 0.05,
 };
 
 // Update settings and run
@@ -43,4 +44,20 @@ gravitySlider!.oninput = function()
 
     // Display gravity value
     gravityOutput!.innerHTML = (<HTMLInputElement> this).value;
+}
+
+// Hair simulation delta time slider
+var hairSimDtSlider = document.getElementById("hairSimDeltaTimeRange");
+var hairSimDtOutput = document.getElementById("hairSimDeltaTime");
+hairSimDtOutput!.innerHTML = (<HTMLInputElement> hairSimDtSlider!).value + " (" + Math.round(1.0 / settings.hairSimDeltaTime) + " fps)";
+hairSimDtSlider!.oninput = function() 
+{
+    let sliderValue = (<HTMLInputElement> this).value;
+
+    // Set
+    settings.hairSimDeltaTime = <number> (<unknown> sliderValue);
+    Scene.updateSettings(settings);
+
+    // Display gravity value
+    hairSimDtOutput!.innerHTML = (<HTMLInputElement> this).value + " (" + Math.round(1.0 / settings.hairSimDeltaTime) + " fps)";
 }
