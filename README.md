@@ -1,8 +1,8 @@
 # Features
-* GPU-based hairstrand physics using Verlet integration
+* GPU-based hair strand physics using Verlet integration
 * Collision against predefined sphere colliders
+* Each "strand" is represented by a ribbon of quads oriented to the view using a cylinder constraint. This means that each ribbon can represent a clump of hair strands.
 * Hair strand root placements use a separate mesh for potential spawn points
-* Each "strand" is represented by a ribbon of quads oriented to the view using a cylinder constraint
 * Interactive in a web browser
 
 # Controls
@@ -13,7 +13,7 @@
 # Potential improvements
 As the project is very barebones and simple, there are a lot of improvements that could be made. Some examples are:
 * Realtime shading using the Marschner model
-* Hair-to-hair interactions
+* Strand-to-strand interactions
 * Mipmaps
 * More elaborate user controls
 * Predefined hair styles
