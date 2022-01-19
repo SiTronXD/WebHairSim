@@ -1,3 +1,5 @@
+![github-small](dist/res/gfx/Showcase2.gif)
+
 # Features
 * GPU-based hair strand physics using [Verlet integration](https://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/Jakobsen.pdf)
 * Collision against predefined sphere colliders
@@ -16,5 +18,6 @@ As the project is very barebones and simple, there are a lot of improvements tha
 * Realtime shading using the Marschner model
 * Strand-to-strand interactions
 * Mipmaps
+* Proper anti-aliasing
 * More elaborate user controls
 * Predefined hair styles
