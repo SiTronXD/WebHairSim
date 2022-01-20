@@ -15,7 +15,7 @@
 
 # The project
 The project was created in Typescript and WGSL, using WebGPU, WebPack, Node.js, Visual Studio Code together with Live Server and WGSL syntax highlight extensions.
-Compile and bundle with the command "npm run prod", and run the live-server to view the application.
+Compile and bundle with the command "npm run prod", and run the live server to view the application.
 
 ![github-small](dist/res/gfx/Showcase2.gif)
 # Potential improvements
